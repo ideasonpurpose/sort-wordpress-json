@@ -1,0 +1,32 @@
+{
+  "test": {
+    "allOf": [
+      {
+        "allOf": [
+          {
+            "allOf": [
+              {
+                "properties": { "level": 3 }
+              },
+              {
+                "properties": { "c": 3 }
+              }
+            ]
+          },
+          {
+            "properties": { "b": 2 }
+          }
+        ]
+      },
+      {
+        "properties": { "a": 1 }
+      },
+      {
+        "properties": {"dupe": 123}
+      },
+      {
+        "properties": {}
+      }
+    ]
+  }
+}

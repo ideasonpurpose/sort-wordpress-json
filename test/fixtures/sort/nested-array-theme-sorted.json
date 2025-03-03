@@ -1,0 +1,23 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/theme.json",
+  "title": "Should appear after 'version'",
+  "version": 3,
+  "settings": {
+    "typography": {
+      "fontSizes": [
+        {
+          "name": "Medium",
+          "slug": "medium",
+          "size": "20px",
+          "fluid": { "min": "16px", "max": "123px" }
+        },
+        {
+          "name": "Large",
+          "slug": "large",
+          "size": "32px",
+          "fluid": { "min": "24px", "max": "321px" }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/theme.json",
+  "version": 3,
+  "title": "Intro",
+  "blockTypes": ["core/paragraph"],
+  "slug": "intro",
+  "styles": {
+    "typography": {
+      "fontFamily": "var:preset|font-family|plex-serif",
+      "fontSize": "var:preset|font-size|large",
+      "lineHeight": "1.33",
+      "fontWeight": "300"
+    },
+    "spacing": { "margin": { "bottom": "var:preset|spacing|40" } }
+  }
+}
