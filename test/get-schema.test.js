@@ -24,8 +24,9 @@ describe("getSchema Tests", async () => {
     const fakeSrc = { $schema: "https://example.com/schema.json" };
     await getSchema(fakeSrc);
 
-    expect(bundleMock).toHaveBeenCalledTimes(1);
-    expect(bundleMock).toHaveBeenCalledWith("https://example.com/schema.json");
+    expect(bundleMock)
+      .toHaveBeenCalledTimes(1)
+      .toHaveBeenCalledWith("https://example.com/schema.json");
   });
 
   test("remote fails, fallback to local", async () => {
@@ -35,10 +36,21 @@ describe("getSchema Tests", async () => {
     const fakeSrc = { $schema: "https://example.com/schema.json" };
 
     await getSchema(fakeSrc);
-    expect(bundleMock).toHaveBeenCalledTimes(2);
 
     expect(bundleMock)
+      .toHaveBeenCalledTimes(2)
       .toHaveBeenCalledWith("https://example.com/schema.json")
+      .toHaveBeenCalledWith("schema/theme.json");
+  });
+
+  test("should fallback to local with no input", async () => {
+
+    bundleMock.mockResolvedValueOnce({ fake: "schema" });
+
+    await getSchema();
+
+    expect(bundleMock)
+      .toHaveBeenCalledTimes(1)
       .toHaveBeenCalledWith("schema/theme.json");
   });
 });
