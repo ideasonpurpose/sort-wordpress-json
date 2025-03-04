@@ -1,0 +1,20 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/theme.json",
+  "version": 3,
+  "slug": "gray",
+  "title": "Gray",
+  "blockTypes": ["core/list"],
+  "styles": {
+    "typography": {
+      "fontSize": "var:preset|font-size|small",
+      "lineHeight": "1.4",
+      "fontWeight": "400"
+    },
+    "color": { "text": "var:preset|color|gray" },
+    "spacing": {
+      "padding": { "left": "1rem", "right": "0" },
+      "margin": { "bottom": "2rem", "top": "0.5rem" }
+    },
+    "css": "& li{ margin-bottom: 0.75rem; }"
+  }
+}
