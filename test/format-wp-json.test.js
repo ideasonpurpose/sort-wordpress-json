@@ -20,18 +20,18 @@ test("Format WP JSON collapses color arrays", async () => {
   expect(actual).toEqual(expected);
 });
 
-// test("Format WP JSON 0 spaces", async () => {
-//   const src = (await readFile(`${fixturesPath}/palette-theme.json`)).toString();
-//   const input = JSON.parse(src);
+test("Format WP JSON with no indent", async () => {
+  const src = (await readFile(`${fixturesPath}/palette-theme.json`)).toString();
+  const input = JSON.parse(src);
 
-//   const expected = (
-//     await readFile(`${fixturesPath}/palette-theme-formatted-0spaces.json`)
-//   ).toString();
+  const expected = (
+    await readFile(`${fixturesPath}/palette-theme-formatted-0spaces.json`)
+  ).toString();
 
-//   const actual = await formatWPJson(input, 0);
+  const actual = await formatWPJson(input, {});
 
-//   expect(actual).toEqual(expected);
-// });
+  expect(actual).toEqual(expected);
+});
 
 test("Condense font-sizes", async () => {
   const src = (
@@ -62,4 +62,3 @@ test("Condense margin and padding", async () => {
 
   expect(actual).toEqual(expected);
 });
-
