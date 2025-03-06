@@ -4,11 +4,13 @@
   "title": "Should appear after 'version'",
   "settings": {
     "color": {},
-    "spacing": {}
+    "spacing": {},
+    "secretSettings": {}
   },
   "styles": {
-    "blocks": {}
+    "blocks": {},
+    "wallpapers": {}
   },
-  "customTemplates": []
-
+  "masthead": "Move this to the end",
+  "z_extraKey": []
 }

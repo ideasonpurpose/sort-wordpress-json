@@ -3,26 +3,26 @@
   "version": 3,
   "title": "Should appear after 'version'",
   "settings": {
+    "color": {
+      "custom": false,
+      "customGradient": true,
+      "defaultGradients": false,
+      "defaultPalette": true,
+      "gradients": [],
+      "link": false,
+      "text": true
+    },
     "layout": {
       "contentSize": "844px"
     },
     "spacing": {
       "margin": true,
       "padding": true
-    },
-    "color": {
-      "custom": false,
-      "defaultPalette": true,
-      "customGradient": true,
-      "defaultGradients": false,
-      "gradients": [],
-      "link": false,
-      "text": true
     }
   },
   "styles": {
+    "typography": {},
     "blocks": {},
-    "elements": {},
-    "typography": {}
+    "elements": {}
   }
 }

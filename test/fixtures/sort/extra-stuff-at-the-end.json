@@ -1,0 +1,16 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/theme.json",
+  "version": 3,
+  "styles": {
+    "wallpapers": {},
+    "blocks": {}
+  },
+  "z_extraKey": [],
+  "settings": {
+    "color": {},
+    "secretSettings": {},
+    "spacing": {}
+  },
+  "masthead": "Move this to the end",
+  "title": "Should appear after 'version'"
+}

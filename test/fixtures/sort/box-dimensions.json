@@ -1,0 +1,12 @@
+{
+  "styles": {
+    "spacing": {
+      "margin": {
+        "bottom": "1px",
+        "right": "1px",
+        "left": "1px",
+        "top": "1px"
+      }
+    }
+  }
+}

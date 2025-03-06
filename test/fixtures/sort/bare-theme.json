@@ -5,8 +5,8 @@
     "blocks": {}
   },
   "settings": {
-    "color": {},
-    "spacing": {}
+    "spacing": {},
+    "color": {}
   },
   "title": "Should appear after 'version'",
   "customTemplates": []
