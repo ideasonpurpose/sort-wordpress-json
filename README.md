@@ -1,6 +1,7 @@
 # Sort WordPress JSON
 
 > ### _This is a work in progress._
+> ### _Needs a real name._
 
 #### Version 0.0.0
 
@@ -68,6 +69,8 @@ Use the [jsonc-parser](https://www.npmjs.com/package/jsonc-parser) library to wa
 
 https://x.com/i/grok/share/3ciwiguDWbf7NuHJnXGaybqe4
 
+Let's only sort JSON files with an explicit `$schema` key pointing to a valid schema file.
+
 ## TODO:
 
 - [ ] Fallback schema should be included with the package, download the latest on build. This should work offline.
@@ -89,6 +92,10 @@ https://x.com/i/grok/share/3ciwiguDWbf7NuHJnXGaybqe4
 
 - [ ] Indentation should be inherited from the source file and used as the basis for reformatting with Prettier. Indentation can also be overridden with a command-line flag.
 
+- [ ] Cache remote schema files?
+
+- [ ] Bundled schema files should be listed in a JSON file which is used for local fallbacks and for refreshing locally bundled schemas. Key the file by the URL.
+
 ## Notes and References
 
 WordPress json schema overview and explanations:
@@ -99,4 +106,3 @@ WordPress schema source sub-repo (in Gutenberg)
 https://github.com/WordPress/gutenberg/tree/trunk/schemas
 
 This uses the [**json-schema-ref-parser**](https://www.npmjs.com/package/@apidevtools/json-schema-ref-parser) for de-reffing JSON schema's so we can loop over their properties more easily.
-
