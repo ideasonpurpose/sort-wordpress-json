@@ -171,7 +171,9 @@ describe("schemaSort tests", async () => {
 
   test("Test recursion limit", () => {
     const path = "....x....x....x....x".split("");
-    const schema = { properties: { key: "value" } };
-    expect(() => walkSchema(schema, {}, {}, path)).toThrowError();
+    const schema = { properties: { key: {} } };
+    expect(() => walkSchema(schema, {}, {}, path)).toThrowError(
+      "We're in too deep!"
+    );
   });
 });
