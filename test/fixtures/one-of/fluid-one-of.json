@@ -1,0 +1,22 @@
+{
+  "properties": {
+    "fluid": {
+      "oneOf": [
+        {
+          "properties": {
+            "north": {},
+            "south": {},
+            "east": {}
+          }
+        },
+        { "ignore": true },
+        {
+          "properties": {
+            "west": {}
+          }
+        },
+        { "nope": "" }
+      ]
+    }
+  }
+}

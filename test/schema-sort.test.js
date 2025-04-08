@@ -88,7 +88,7 @@ describe("schemaSort tests", async () => {
 
   // NOTE: oneOf is not being handled, max is coming before min,
   //       opposite of what's in the schema.
-  test.skip("sort nested-array-theme.json", async () => {
+  test("sort nested-array-theme.json", async () => {
     const src = await readFile(`./test/fixtures/sort/nested-array-theme.json`);
     const input = JSON.parse(src);
 

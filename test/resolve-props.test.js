@@ -59,6 +59,17 @@ describe("resolveProps", async () => {
     ]);
   });
 
+
+  test("flattenProps oneOf", async () => {
+    const fakeSchema = JSON.parse(
+      await readFile(`./test/fixtures/one-of/fluid-one-of.json`)
+    );
+
+    const actual = flattenProps({}, fakeSchema.properties.fluid.oneOf);
+
+    expect(Object.keys(actual)).toEqual(["north", "south", "east", "west"]);
+  });
+
   /**
    * Settings has a nested allOf in the top-level allOf
    * both should be merged.
