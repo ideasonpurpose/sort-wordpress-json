@@ -1,40 +1,34 @@
 # Sort WordPress JSON
 
-This project is inspired by the wonderful sort-package-json package. This does a lot less, it only sorts the valid json files supported by Gutenberg, currently theme.json, block.json and font-collection.json. Maybe it'll do more someday.
+> ### _This is a work in progress._
 
-Lint your files. Because things should be where they should be.
+#### Version 0.0.0
+
+> "Things should be where things should be.""
+
+Enforcing property order by convention makes development ande debugging faster because we know where properties should be. This project was largely inspired by [sort-package-json](https://github.com/keithamus/sort-package-json), but takes a different approach instead deep-sorting WordPress JSON files by their schema.
 
 ## Why?
 
-As the WordPress theme.json files devour more and more of the development process in WordPress, navigating the files becomes slower. Part of the reason is that the files tend to grow organically during development, and declarations get added as needed, usually at the end.
+As the WordPress theme.json files assume a larger and large role in WordPress development, navigating the files becomes slower. Part of the reason is that the files tend to grow organically during development, declarations get added as needed, usually at the end, and the files become an organic pile of ad hoc additions.
 
-Without a strongly enforced order, diffing theme.json files across projects is very difficult to useless. If a slightly obscure new property is added to one project, not being able to immediately diff the updated theme.json file against an older project leads to wasted effort and mis-used dev time.
+Without a strongly enforced order, diffing theme.json files across projects is very difficult. When a slightly obscure new property is added to one project, not being able to immediately diff the updated theme.json file against an older project leads to wasted effort and mis-used dev time.
 
+This packages takes the [published WordPress schemas](https://github.com/WordPress/gutenberg/tree/trunk/schemas) as the source of truth, and uses their published property order as a baseline for re-ordering a file's properties.
 
-~This package hopes to help by providing an empirical sort order based on the published WordPress schemas:~
+Files should include a $schema property. This tool will attempt to use the linked schema, and will fall back to a local copy which are synced from the WordPress source repo whenever this package is updated. These three schema are bundled:
+
 - https://schemas.wp.org/trunk/theme.json
 - https://schemas.wp.org/trunk/block.json
 - https://schemas.wp.org/trunk/font-collection.json
-NOTE: Don't do that. Order the file based on whichever scheme is noted at the top, or fallback to the trunk/theme.json. All fragment files should be covered by the main one.
-
-Idea: We _could_ provide a flag for ordering based on a specific versioned schema, but that seems like a waste of time and effort. WordPress changes too frequenly, and updates routinely break existing code requiring upgrades. Just stick with the most recent. This is a dev tool, there should be a baseline expectation that the people using it are capable of fixing things and don't need to be protected from themselves. 
-
-Schemas are automatically updated with each versioned release.
 
 ### No really, this is better
 
-Initial sort order was derived directly from the canonical theme.json schema. That file (included in the source package distribution) was parsed, and various settings property definitions were used for initial order.
-
 Much as [package.json](https://docs.npmjs.com/cli/v9/configuring-npm/package-json#description), [composer.json](https://getcomposer.org/doc/04-schema.md) and a of CSS linting projects [stylelint-order](https://github.com/hudochenkov/stylelint-order) assert a more useful, logical order for properties, this project also takes an opinionated stance on property order.
-
-Initial sort order was derived directly from the canonical [theme.json schema](https://schemas.wp.org/trunk/theme.json). That file (included in the source package distribution) was parsed, and various settings property definitions were used for initial order. However many (but not all) of the schema definitions listed properties alphabetically. That makes sense for a maintainable schema, but not so much for working theme.json files in production.
-
-Property collection overrides are isolated in separate files with the intention that future updates will allow for individual customization.
 
 ### Overrides
 
-At some point, the WordPress schema properties were alphabetized. For those of us still hand-authoring a significant amount of our theme.json files, this is kind of insane. CSS 
-
+At some point, the WordPress schema properties were alphabetized. For those of us still hand-authoring a significant amount of our theme.json files, this is kind of insane. CSS
 
 Some order overrides include:
 
@@ -42,34 +36,27 @@ Grouping color palette, gradient and duotone options together. Instead of `custo
 
 ```json
 {
-    "color": {
-        "custom": true,
-        "defaultPalette": false,
-        "palette": [
+  "color": {
+    "custom": true,
+    "defaultPalette": false,
+    "palette": [],
 
-        ],
-        "customGradient": false,
-        "defaultGradients": false,
-        "gradients": [
+    "customGradient": false,
+    "defaultGradients": false,
+    "gradients": [],
 
-        ],
-        "customDuotone": true,
-        "defaultDuotone": false,
-        "duotone": [
-
-        ]
+    "customDuotone": true,
+    "defaultDuotone": false,
+    "duotone": []
+  }
 }
-
-We put Duotones last because we think adding that feature was a mistake.
-
-Generally, anything with a CSS parallel will follow CSS conventions. Eg. Any object describing a box will be re-ordered to match css: Top, Right, Bottom, Left. 
-
-
+```
 
 ### Don't sort that
 
-Because some enumerable collections like sizes are also directly exposed to authors, those will remain unsorted. Lists of options like color palettes, font listings and sizes may be arranged in a specific order and will pass through unchanged.
+Because some enumerable collections like sizes are also directly exposed to content authors, those will remain unsorted. Lists of options like color palettes, font listings and sizes may be arranged in a specific order and will pass through unchanged.
 
+---
 
 ## Notes
 
@@ -77,69 +64,39 @@ The theme.json schema is updated fairly regularly. This project should have some
 
 https://github.com/WordPress/gutenberg/commits/trunk/schemas/json/theme.json
 
-
-
-### jsonschema library
-
-I don't think this is actually necessary. Validating the file is outside the scope of this project, all I want to do with the schema is ingest it and use the order of properties as a baseline for ordering the files.
-
-Better solution: [**json-schema-ref-parser**](https://www.npmjs.com/package/@apidevtools/json-schema-ref-parser)  If that
-```
-
-
-## How it works (attempt 2025-01)
-
-The schema will be used as the basis for ordering. Overrides will be applied to the definitions section, then the schema will be dereffed and iterated. For each nested object, known properties will be copied first based on the theme.json schema, then any remaining properties will be sorted alphabetically and merged.
-
-
-
-### Indentation
-
-Indentation will be inherited from the source file and used as the basis for reformatting with Prettier. Indentation can also be overridden with the 
-
-
-
-## Custom formatting idea from Grok
-
-Use the [jsonc-parser](https://www.npmjs.com/package/jsonc-parser) library to walk the document after formatting with Prettier, then replace specific elements with collapsed representations: 
+Use the [jsonc-parser](https://www.npmjs.com/package/jsonc-parser) library to walk the document after formatting with Prettier, then replace specific elements with collapsed representations:
 
 https://x.com/i/grok/share/3ciwiguDWbf7NuHJnXGaybqe4
 
+## TODO:
 
+- [ ] Fallback schema should be included with the package, download the latest on build. This should work offline.
 
-## TODO: 
+- [ ] If you're insane, you can set indent to 0, which will remove all formatting and output a condensed, stringified JSON file.
 
-Fallback schema should be included with the package, download the latest on build. This should work offline. 
+- [ ] Due to slow retrieval and infrequent source changes, maybe the source schema are just baked into each release as part of the build? If we _really_ needed to, there could be a flag for always loading remote schemas from the file instead of the cache.
 
-If you're insane, you can set indent to 0, which will remove all formatting and output a condensed, stringified JSON file. 
+- [ ] Shelving that for now, it's an optimization.
 
-Due to slow retrieval and infrequent source changes, maybe the source schema are just baked into each release as part of the build? If we _really_ needed to, there could be a flag for always loading remote schemas from the file instead of the cache.
+- [ ] Add tests for composer.json
 
-Shelving that for now, it's an optimization.
+- [ ] Break out the schema-sort into a separate package/library.
 
+- [ ] Property collection overrides are isolated in separate files with the intention that future updates will allow for individual customization.
+
+- [ ] Anything with a CSS parallel should follow CSS conventions. Eg. Any object describing a box will be re-ordered to match css: Top, Right, Bottom, Left. [Border-radius](https://developer.mozilla.org/en-US/docs/Web/CSS/border-radius) should be re-ordered to:
+      top-left, top-right, bottom-right, bottom-left.
+
+- [ ] Indentation should be inherited from the source file and used as the basis for reformatting with Prettier. Indentation can also be overridden with a command-line flag.
 
 ## Notes and References
 
-WordPress json schema overview and explanations: 
+WordPress json schema overview and explanations:
 
 https://developer.wordpress.org/news/2024/07/json-schema-in-wordpress/
 
 WordPress schema source sub-repo (in Gutenberg)
 https://github.com/WordPress/gutenberg/tree/trunk/schemas
 
-
-
-
-
-## Plane questions
-
-- Q. How to run vitest with full breakpoint debugging in vscode? 
-    > Open JavaScript Debug terminal from the VS Code terminal dropdown menu. Run the tests normally. 
-- how to increase the collapse limit for nested objects in the js console when dumping from vitest?
-    > This works, but it's gross:
-
-    ``` js
-    import util from 'node:util';
-    console.log('Custom:', util.inspect(deepObject, { depth: 10 }));
-    ```
+This uses the [**json-schema-ref-parser**](https://www.npmjs.com/package/@apidevtools/json-schema-ref-parser) for de-reffing JSON schema's so we can loop over their properties more easily.
 
