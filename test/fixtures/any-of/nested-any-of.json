@@ -1,0 +1,26 @@
+{
+  "properties": {
+    "styles": {
+      "anyOf": [
+        {
+          "anyOf": [
+            { "properties": { "red": "red" } },
+            { "properties": { "orange": "orange" } }
+          ]
+        },
+        {
+          "properties": {
+            "yellow": "yellow",
+            "green": "green"
+          }
+        },
+        {
+          "properties": {
+            "blue": "blue",
+            "violet": "violet"
+          }
+        }
+      ]
+    }
+  }
+}

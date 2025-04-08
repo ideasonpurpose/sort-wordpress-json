@@ -1,0 +1,52 @@
+{
+  "properties": {
+    "radius": {
+      "description": "Sets the `border-radius` CSS property.",
+      "anyOf": [
+        { "type": "string" },
+        { "$ref": "#/definitions/refComplete" },
+        {
+          "type": "object",
+          "properties": {
+            "topLeft": {
+              "description": "Sets the `border-top-left-radius` CSS property.",
+              "oneOf": [
+                { "type": "string" },
+                {
+                  "$ref": "#/definitions/refComplete"
+                }
+              ]
+            },
+            "topRight": {
+              "description": "Sets the `border-top-right-radius` CSS property.",
+              "oneOf": [
+                { "type": "string" },
+                {
+                  "$ref": "#/definitions/refComplete"
+                }
+              ]
+            },
+            "bottomLeft": {
+              "description": "Sets the `border-bottom-left-radius` CSS property.",
+              "oneOf": [
+                { "type": "string" },
+                {
+                  "$ref": "#/definitions/refComplete"
+                }
+              ]
+            },
+            "bottomRight": {
+              "description": "Sets the `border-bottom-right-radius` CSS property.",
+              "oneOf": [
+                { "type": "string" },
+                {
+                  "$ref": "#/definitions/refComplete"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+}
