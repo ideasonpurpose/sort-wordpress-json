@@ -59,7 +59,6 @@ describe("resolveProps", async () => {
     ]);
   });
 
-
   test("flattenProps oneOf", async () => {
     const fakeSchema = JSON.parse(
       await readFile(`./test/fixtures/one-of/fluid-one-of.json`)
@@ -68,6 +67,36 @@ describe("resolveProps", async () => {
     const actual = flattenProps({}, fakeSchema.properties.fluid.oneOf);
 
     expect(Object.keys(actual)).toEqual(["north", "south", "east", "west"]);
+  });
+
+  test("anyOf for coverage", async () => {
+    const fakeSchema = JSON.parse(
+      await readFile(`./test/fixtures/any-of/nested-any-of.json`)
+    );
+
+    const actual = resolveProps(fakeSchema.properties);
+    expect(Object.keys(actual.styles.properties)).toEqual([
+      "red",
+      "orange",
+      "yellow",
+      "green",
+      "blue",
+      "violet",
+    ]);
+  });
+
+  test("oneOf for coverage", async () => {
+    const fakeSchema = JSON.parse(
+      await readFile(`./test/fixtures/one-of/fluid-one-of.json`)
+    );
+
+    const actual = resolveProps(fakeSchema.properties);
+    expect(Object.keys(actual.fluid.properties)).toEqual([
+      "north",
+      "south",
+      "east",
+      "west",
+    ]);
   });
 
   /**
