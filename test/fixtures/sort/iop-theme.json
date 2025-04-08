@@ -358,19 +358,6 @@
           }
         }
       },
-      "h2": {
-        "typography": {
-          "fontSize": "var:preset|font-size|x-large",
-          "fontStyle": "normal",
-          "fontWeight": "350"
-        },
-        "spacing": {
-          "margin": {
-            "top": "var:preset|spacing|80",
-            "bottom": "var:preset|spacing|50"
-          }
-        }
-      },
       "h3": {
         "typography": {
           "fontSize": "var:preset|font-size|large",
@@ -388,6 +375,19 @@
           "fontSize": "var:preset|font-size|medium",
           "fontWeight": "700",
           "textTransform": "uppercase"
+        }
+      },
+      "h2": {
+        "typography": {
+          "fontSize": "var:preset|font-size|x-large",
+          "fontStyle": "normal",
+          "fontWeight": "350"
+        },
+        "spacing": {
+          "margin": {
+            "top": "var:preset|spacing|80",
+            "bottom": "var:preset|spacing|50"
+          }
         }
       }
     }

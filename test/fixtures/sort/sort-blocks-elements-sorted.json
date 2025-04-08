@@ -1,0 +1,21 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/theme.json",
+  "styles": {
+    "elements": {
+      "button": {},
+      "heading": {},
+      "h1": {},
+      "h3": {},
+      "caption": {},
+      "not_an_element": {}
+    },
+    "blocks": {
+      "core/details": {},
+      "core/list": {
+        "color": {},
+        "typography": {}
+      },
+      "core/paragraph": {}
+    }
+  }
+}
