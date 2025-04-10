@@ -4,11 +4,19 @@ import { expect, test, describe } from "vitest";
 import { getSchema } from "../lib/get-schema.js";
 import { schemaSort, walkSchema } from "../lib/schema-sort.js";
 
-describe("schemaSort tests", async () => {
+describe("schemaSort", async () => {
   const schema = await getSchema();
 
   test("Requires a schema", async () => {
     await expect(schemaSort({ some: "data" })).rejects.toThrow();
+  });
+
+  test("Recursion limit", () => {
+    const path = "....x....x....x....x".split("");
+    const schema = { properties: { key: {} } };
+    expect(() => walkSchema(schema, {}, {}, path)).toThrowError(
+      "We're in too deep!"
+    );
   });
 
   test("sort bare theme.json", async () => {
@@ -20,6 +28,9 @@ describe("schemaSort tests", async () => {
     );
 
     const actual = await schemaSort(input, schema);
+
+    await writeFile(`./tmp/bare-theme.json`, JSON.stringify(actual, null, 2));
+
     expect(actual).toEqual(expected);
     expect(JSON.stringify(actual, null, 2)).toBe(
       JSON.stringify(expected, null, 2)
@@ -130,23 +141,6 @@ describe("schemaSort tests", async () => {
     );
   });
 
-  test.skip("sort iop-theme.json", async () => {
-    const src = await readFile(`./test/fixtures/sort/iop-theme.json`);
-    const input = JSON.parse(src);
-
-    const expected = JSON.parse(
-      await readFile(`./test/fixtures/sort/iop-theme-sorted.json`)
-    );
-
-    const actual = await schemaSort(input, schema);
-
-    await writeFile(`./tmp/iop-theme.json`, JSON.stringify(actual, null, 2));
-    expect(actual).toEqual(expected);
-    expect(JSON.stringify(actual, null, 2)).toBe(
-      JSON.stringify(expected, null, 2)
-    );
-  });
-
   test("sort sort-blocks-elements.json", async () => {
     const src = await readFile(
       `./test/fixtures/sort/sort-blocks-elements.json`
@@ -169,11 +163,54 @@ describe("schemaSort tests", async () => {
     );
   });
 
-  test("Test recursion limit", () => {
-    const path = "....x....x....x....x".split("");
-    const schema = { properties: { key: {} } };
-    expect(() => walkSchema(schema, {}, {}, path)).toThrowError(
-      "We're in too deep!"
+  test("sort units-array.json", async () => {
+    const src = await readFile(`./test/fixtures/sort/units-array.json`);
+    const input = JSON.parse(src);
+
+    const expected = JSON.parse(
+      await readFile(`./test/fixtures/sort/units-array-sorted.json`)
+    );
+
+    const actual = await schemaSort(input, schema);
+
+    await writeFile(`./tmp/units-array.json`, JSON.stringify(actual, null, 2));
+    expect(actual).toEqual(expected);
+    expect(JSON.stringify(actual, null, 2)).toBe(
+      JSON.stringify(expected, null, 2)
+    );
+  });
+
+  test.skip("sort iop-theme.json", async () => {
+    const src = await readFile(`./test/fixtures/sort/iop-theme.json`);
+    const input = JSON.parse(src);
+
+    const expected = JSON.parse(
+      await readFile(`./test/fixtures/sort/iop-theme-sorted.json`)
+    );
+
+    const actual = await schemaSort(input, schema);
+
+    await writeFile(`./tmp/iop-theme.json`, JSON.stringify(actual, null, 2));
+    expect(actual).toEqual(expected);
+    expect(JSON.stringify(actual, null, 2)).toBe(
+      JSON.stringify(expected, null, 2)
+    );
+  });
+
+  test.skip("sort gwbs-theme.json", async () => {
+    const src = await readFile(`./test/fixtures/sort/gwbs-theme.json`);
+    const input = JSON.parse(src);
+
+    const expected = JSON.parse(
+      await readFile(`./test/fixtures/sort/gwbs-theme-sorted.json`)
+    );
+
+    const actual = await schemaSort(input, schema);
+
+    await writeFile(`./tmp/gwbs-theme.json`, JSON.stringify(actual, null, 2));
+    expect(actual).toEqual(expected);
+    expect(JSON.stringify(actual, null, 2)).toBe(
+      JSON.stringify(expected, null, 2)
     );
   });
 });
