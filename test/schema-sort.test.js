@@ -213,4 +213,33 @@ describe("schemaSort", async () => {
       JSON.stringify(expected, null, 2)
     );
   });
+
+
+
+//   test("sort gravity-forms simple-test-form.json", async () => {
+
+// const schema =
+
+//     const src = await readFile(
+//       `./test/fixtures/gravity-forms/simple-test-form.json`
+//     );
+//     const input = JSON.parse(src);
+
+//     const expected = JSON.parse(
+//       await readFile(`./test/fixtures/gravity-forms/simple-test-form-sorted.json`)
+//     );
+
+//     const actual = await schemaSort(input, schema);
+
+//     await writeFile(
+//       `./tmp/gravity-forms-simple-test-form.json`,
+//       JSON.stringify(actual, null, 2)
+//     );
+//     expect(actual).toEqual(expected);
+//     expect(JSON.stringify(actual, null, 2)).toBe(
+//       JSON.stringify(expected, null, 2)
+//     );
+//   });
+
+
 });

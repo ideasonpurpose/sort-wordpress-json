@@ -4,7 +4,7 @@ import { getSchema } from "../lib/get-schema.js";
 
 import { readdir, readFile } from "node:fs/promises";
 
-describe.skip("Sorted JSON equals original JSON", async () => {
+describe("Sorted JSON equals original JSON", async () => {
   const jsonFiles = (await readdir("./test/fixtures/sort")).filter(
     (f) => f.endsWith(".json") && !f.endsWith("-sorted.json")
   );
