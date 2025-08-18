@@ -1,6 +1,6 @@
 {
   "name": "sort-wordpress-json",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Sorts WordPress JSON files. Because things should be where things should be.",
   "keywords": [],
   "license": "MIT",
