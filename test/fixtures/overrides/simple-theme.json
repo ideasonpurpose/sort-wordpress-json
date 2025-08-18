@@ -1,0 +1,24 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/theme.json",
+  "version": 3,
+  "styles": {
+    "typography": {}
+  },
+  "settings": {
+    "layout": {
+      "contentSize": "844px"
+    },
+    "spacing": {
+      "padding": true,
+      "margin": true
+    },
+    "color": {
+      "gradients": [],
+      "defaultPalette": true,
+      "custom": false,
+      "customGradient": true,
+      "defaultGradients": false
+    }
+  },
+  "title": "Should appear after 'version'"
+}
