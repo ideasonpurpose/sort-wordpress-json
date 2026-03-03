@@ -195,13 +195,13 @@ Note: would --no-overrides be the same as --overrides=[] (empty array of overrid
     ]
   }
 }
-
+```
 
 
 
 ## Running in Development
 
-Until this is proven and released, it must be run directly from this repository. In the terminal, type this, then drag in the files or directory contining files to be sorted:
+Until this is proven and released, it must be run directly from this repository. In the terminal, type this, then drag in the files or directory containing files to be sorted:
 
 ```
 $ node cli.js <file>
