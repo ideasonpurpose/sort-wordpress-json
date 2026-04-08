@@ -2,7 +2,7 @@
   "name": "sort-wordpress-json",
   "version": "0.0.1",
   "description": "Sorts WordPress JSON files. Because things should be where things should be.",
-  "keywords": [],
+  "keywords": ["wordpress", "json", "sort", "theme.json", "block.json"],
   "license": "MIT",
   "author": "Ideas On Purpose (https://www.ideasonpurpose.com/)",
   "contributors": [
