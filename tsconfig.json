@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": false,
+    "skipLibCheck": true,
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "lib": ["es2024"],
+    "types": ["node"]
+  },
+  "include": [
+    "cli.js",
+    "types.d.ts",
+    "lib/**/*.js"
+  ]
+}
