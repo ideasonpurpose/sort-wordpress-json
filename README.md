@@ -1,20 +1,17 @@
 # Sort WordPress JSON
 
-> ### _This is a work in progress._
->
-> ### _Needs a real name._
 
 #### Version 0.0.1
 
 > "Things should be where things should be."
 
-Enforcing property order by convention makes development and debugging faster because we know where properties should be. This project was largely inspired by [sort-package-json](https://github.com/keithamus/sort-package-json), but takes a different approach and deep-sorts WordPress JSON files according to their schema.
+Enforcing property order makes development and debugging faster because we know where properties should be. This project was largely inspired by [sort-package-json](https://github.com/keithamus/sort-package-json), but takes a different approach and deep-sorts WordPress JSON files according to their schema.
 
 ## Why?
 
-As the WordPress theme.json files assume a larger and large role in WordPress development, navigating the files becomes slower. Part of the reason is that the files tend to grow organically during development, declarations get added as needed, usually at the end, and the files become an organic pile of ad hoc additions.
+As JSON files take a larger role in WordPress development, navigating these files becomes slower. The files tend to grow organically during development, with declarations added as needed, usually at the end, resulting in files that are an organic mess of ad hoc additions.
 
-Without a strongly enforced order, diffing theme.json files across projects is very difficult. When a slightly obscure new property is added to one project, not being able to immediately diff the updated theme.json file against an older project leads to wasted effort and mis-used dev time.
+Without a strongly enforced order, diffing theme.json files across projects is nearly useless. If a new property is added to one project, not being able to immediately diff the updated json files against an older project leads to wasted effort and mis-used dev time.
 
 This packages takes the [published WordPress schemas](https://github.com/WordPress/gutenberg/tree/trunk/schemas) as the source of truth, and uses their published property order as a baseline for re-ordering a file's properties.
 
@@ -27,6 +24,134 @@ Files should include a $schema property. This tool will attempt to use the linke
 ### No really, this is better
 
 Much as [package.json](https://docs.npmjs.com/cli/v9/configuring-npm/package-json#description), [composer.json](https://getcomposer.org/doc/04-schema.md) and a of CSS linting projects [stylelint-order](https://github.com/hudochenkov/stylelint-order) assert a more useful, logical order for properties, this project also takes an opinionated stance on property order.
+
+
+### Don't sort that
+
+Because some enumerable collections like sizes are also directly exposed to content authors, those will remain unsorted. Lists of options like color palettes, font listings and sizes may be arranged in a specific order and will pass through unchanged.
+
+## Notes and References
+
+WordPress json schema overview and explanations:
+
+https://developer.wordpress.org/news/2024/07/json-schema-in-wordpress/
+
+WordPress schema source sub-repo (in Gutenberg)
+https://github.com/WordPress/gutenberg/tree/trunk/schemas
+
+This uses the [**json-schema-ref-parser**](https://www.npmjs.com/package/@apidevtools/json-schema-ref-parser) for de-reffing JSON schema's so we can loop over their properties more easily.
+
+### Note on top-level run
+
+If run from the top level of a theme, this should find and format all of the following:
+
+- theme.json
+- styles/\*.json
+- \*_/_.block.json
+
+Do not search in node_modules/ or vendor/
+
+### Overrides
+
+Keys can be forced to the top or bottom of their sibling groups using overrides. This allows customization of JSON properties beyond the default schema-based order, to make critical properties easier to find.
+
+Specify overrides as an array of dot-delimited key-paths representing the nested path to a property. Overridden paths will appear at the top of their sibling groups. Paths can also be prefixed with an exclamation point (`!`) to force them to the bottom. Invalid or non-existent paths are ignored.
+
+Example:
+
+```json
+[
+  "settings.layout",         // Force "layout" to top of "settings"
+  "!settings.advanced",      // Force "advanced" to bottom of "settings"
+  "settings.color.custom",   // Force "custom" to top of "color"
+  "!settings.color.presets"  // Force "presets" to bottom of "color"
+]
+```
+##### Before (schema ordered)
+```json
+{
+  "settings": {
+    "color": {
+      "presets": [],
+      "custom": true
+    },
+    "advanced": {},
+    "layout": {}
+  }
+}
+```
+
+##### After (with overrides applied)
+```json
+{
+  "settings": {
+    "layout": {},               // Moved to top
+    "color": {
+      "custom": true,           // Moved to top
+      "presets": []             // Moved to bottom
+    },
+    "advanced": {}              // Moved to bottom
+  }
+}
+```
+
+
+### CLI Interface
+
+Sketching here:
+
+sort-wp-json <file> --no-overrides
+Flags:
+
+- `--no-overrides` - Output direct from the schema with no opinionated overrides
+- `--schema` - override a schema (accepts a file path or url)
+- `--verbose`
+
+Note: would --no-overrides be the same as --overrides=[] (empty array of overrides)? Probably best to keep it explicit. IF no-overrides was combined with overrides, then the defaults would first be removed, then the provided overrides would be used. If only a list of overrides was provided, then the list would have the internal overrides applied onto it, so the provided keys would take priority.
+
+> TODO: Overrides should be able to be stored in package.json, similar to how Prettier does:
+>
+> In package.json, add a sort-wp-json property, something like this:
+
+```json
+{
+  "name": "sort-wp-json-example",
+  "description": "Example showing sort-wp-json overrides in package.json",
+  "sort-wp-json": {
+    "overrides": [
+      "settings.layout",
+      "settings.useRootPaddingAwareAlignments",
+      "settings.color.custom",
+      "settings.color.defaultPalette",
+      "settings.color.palette",
+      "settings.color.customGradient",
+      "settings.color.defaultGradients",
+      "settings.color.gradients"
+    ]
+  }
+}
+```
+
+### Dry-run
+
+To see what sort-wp-json would do, use the `--dry-run` flag (or `-n`). For colors, pipe through [**jq**](https://jqlang.org)
+
+## Running in Development
+
+Until this is proven and released, it must be run directly from this repository. In the terminal, type this, then drag in the files or directory containing files to be sorted:
+
+```
+$ node cli.js <file>
+```
+
+## License
+
+MIT
+
+
+
+--- 
+## Cruft, leftovers and notes not yet deleted
 
 ### Overrides
 
@@ -54,9 +179,7 @@ Grouping color palette, gradient and duotone options together. Instead of `custo
 }
 ```
 
-### Don't sort that
 
-Because some enumerable collections like sizes are also directly exposed to content authors, those will remain unsorted. Lists of options like color palettes, font listings and sizes may be arranged in a specific order and will pass through unchanged.
 
 ---
 
@@ -92,7 +215,8 @@ Let's only sort JSON files with an explicit `$schema` key pointing to a valid sc
 
 - [ ] Property collection overrides are isolated in separate files with the intention that future updates will allow for individual customization.
 
-- [ ] Anything with a CSS parallel should follow CSS conventions. Eg. Any object describing a box will be re-ordered to match css: Top, Right, Bottom, Left. [Border-radius](https://developer.mozilla.org/en-US/docs/Web/CSS/border-radius) should be re-ordered to:
+- [x] Anything with a CSS parallel should follow CSS conventions. Eg. Any object describing a box will be re-ordered to match css: Top, Right, Bottom, Left. 
+- [ ] [Border-radius](https://developer.mozilla.org/en-US/docs/Web/CSS/border-radius) should be re-ordered to:
       top-left, top-right, bottom-right, bottom-left.
 
 - [ ] Indentation should be inherited from the source file and used as the basis for reformatting with Prettier. Indentation can also be overridden with a command-line flag.
@@ -103,106 +227,3 @@ Let's only sort JSON files with an explicit `$schema` key pointing to a valid sc
 
 - [ ] Should be able to run on a directory, and sort all JSON files which contain a $schema. Or, look for WordPress-specific JSON files only?
 
-## Notes and References
-
-WordPress json schema overview and explanations:
-
-https://developer.wordpress.org/news/2024/07/json-schema-in-wordpress/
-
-WordPress schema source sub-repo (in Gutenberg)
-https://github.com/WordPress/gutenberg/tree/trunk/schemas
-
-This uses the [**json-schema-ref-parser**](https://www.npmjs.com/package/@apidevtools/json-schema-ref-parser) for de-reffing JSON schema's so we can loop over their properties more easily.
-
-### Note on top-level run
-
-If run from the top level of a theme, this should find and format all of the following:
-
-- theme.json
-- styles/\*.json
-- \*_/_.block.json
-
-Do not search in node_modules/ or vendor/
-
-### Notes on overrides
-
-This should accept either an array of optionally dot.delimited properties, or an object (JSON file?) containing a hierarchical example of objects to override.
-
-#### Examples:
-
-~~Override object:~~ This doesn't work very well since it would require a representation the entire tree prior to the overridden key. Without that, every property in the chain would be applied first, putting `settings` before all of it's other top-level sibling properties. The list of dot-separated properties can be matched against the stored path items,. 
-
-```json
-{
-  "settings": {
-    "layout": 0,
-    "color": {
-      "custom": 0,
-      "gradient": 0,
-      "customGradient": 0
-    }
-  }
-}
-```
-
-Dot-array of keys:
-
-This works better because we only need to consider the values which match the current level. THe following example would override settings.layout, but would ignore all other sibling properties of settings.layout. Likewise, the three settings.color properties would be overridden, but settings.color would be otherwise unaffected relative to it's siblings.  
-
-```json
-[
-  "settings.layout",
-  "settings.color.custom"
-  "settings.color.gradient"
-  "settings.color.customGradient"
-]
-```
-
-
-### CLI Interface
-
-Sketching here: 
-
-
-sort-wp-json <file> --no-overrides
-Flags: 
-
-* `--no-overrides` - Output direct from the schema with no opinionated overrides
-* `--schema` - override a schema (accepts a file path or url)
-* `--verbose`
-
-
-Note: would --no-overrides be the same as --overrides=[] (empty array of overrides)?  Probably best to keep it explicit. IF no-overrides was combined with overrides, then the defaults would first be removed, then the provided overrides would be used. If only a list of overrides was provided, then the list would have the internal overrides applied onto it, so the provided keys would take priority. 
-
-> TODO: Overrides should be able to be stored in package.json, similar to how Prettier does:
->
-> In package.json, add a sort-wp-json property, something like this:
-
-```json
-{
-  "name": "sort-wp-json-example",
-  "description": "Example showing sort-wp-json overrides in package.json",
-  "sort-wp-json": {
-    "overrides": [
-      "settings.layout",
-      "settings.useRootPaddingAwareAlignments",
-      "settings.color.custom",
-      "settings.color.defaultPalette",
-      "settings.color.palette",
-      "settings.color.customGradient",
-      "settings.color.defaultGradients",
-      "settings.color.gradients",
-    ]
-  }
-}
-```
-
-
-
-## Running in Development
-
-Until this is proven and released, it must be run directly from this repository. In the terminal, type this, then drag in the files or directory containing files to be sorted:
-
-```
-$ node cli.js <file>
-```
