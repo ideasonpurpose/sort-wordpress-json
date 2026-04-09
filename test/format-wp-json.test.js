@@ -20,7 +20,7 @@ test("Format WP JSON collapses color arrays", async () => {
   expect(actual).toEqual(expected);
 });
 
-test("Format WP JSON with no indent", async () => {
+test("Format WP JSON with no indent (passthrough)", async () => {
   const src = (await readFile(`${fixturesPath}/palette-theme.json`)).toString();
   const input = JSON.parse(src);
 
@@ -31,6 +31,15 @@ test("Format WP JSON with no indent", async () => {
   const actual = await formatWPJson(input, {});
 
   expect(actual).toEqual(expected);
+});
+
+test("Indent with tabs", async () => {
+  const src = (await readFile(`${fixturesPath}/palette-theme.json`)).toString();
+  const input = JSON.parse(src);
+
+  const actual = await formatWPJson(input, { indent: "\t", type: "tab" });
+
+  expect(actual).toMatch("{\n\t");
 });
 
 test("Condense font-sizes", async () => {
@@ -49,6 +58,21 @@ test("Condense font-sizes", async () => {
 });
 
 test("Condense margin and padding", async () => {
+  const src = (
+    await readFile(`${fixturesPath}/block-variation.json`)
+  ).toString();
+  const input = JSON.parse(src);
+  const expected = (
+    await readFile(`${fixturesPath}/block-variation-formatted.json`)
+  ).toString();
+
+  const indent = detectIndent(src);
+  const actual = await formatWPJson(input, indent);
+
+  expect(actual).toEqual(expected);
+});
+
+test("Correct condensed key:object bracket spacing", async () => {
   const src = (
     await readFile(`${fixturesPath}/block-variation.json`)
   ).toString();
