@@ -1,0 +1,117 @@
+{
+     "$schema": "https://schemas.wp.org/trunk/theme.json",
+     "version": 3,
+     "settings": {
+          "color": {
+               "custom": false,
+               "customDuotone": false,
+               "customGradient": false,
+               "defaultDuotone": false,
+               "defaultGradients": false,
+               "defaultPalette": false,
+               "link": false,
+               "palette": [
+                    { "name": "Teal", "slug": "teal", "color": "#43a3a1" },
+                    { "name": "Teal 900", "slug": "teal-900", "color": "#337F7A" },
+                    { "name": "Blue 900", "slug": "blue-900", "color": "#154256" },
+                    { "name": "Gray 500", "slug": "gray-500", "color": "#969696" },
+                    { "name": "White", "slug": "white", "color": "#fff" },
+                    { "name": "Black", "slug": "black", "color": "#000" }
+               ]
+          },
+          "layout": {
+               "contentSize": "760px",
+               "wideSize": "940px"
+          },
+          "spacing": {
+               "blockGap": null,
+               "margin": false,
+               "padding": false,
+               "units": ["%", "px"]
+          },
+          "typography": {
+               "defaultFontSizes": false,
+               "customFontSize": false,
+               "fontStyle": false,
+               "fontWeight": false,
+               "fluid": false,
+               "letterSpacing": false,
+               "lineHeight": false,
+               "dropCap": false,
+               "fontSizes": [
+                    { "name": "Small", "slug": "small", "size": "12px" },
+                    { "name": "Medium", "slug": "medium", "size": "14px" },
+                    { "name": "Large", "slug": "large", "size": "16px" },
+                    { "name": "Extra Large", "slug": "x-large", "size": "24px" },
+                    { "name": "2X Large", "slug": "xx-large", "size": "30px" }
+               ],
+               "fontFamilies": [
+                    {
+                         "name": "Untitled Sans",
+                         "slug": "untitled-sans",
+                         "fontFamily": "var(--font-family__untitled-sans)"
+                    }
+               ]
+          },
+          "blocks": {
+               "core/button": { "border": { "radius": false } },
+               "core/cover": {
+                    "color": {
+                         "palette": [
+                              {
+                                   "name": "Teal 900",
+                                   "slug": "teal-900",
+                                   "color": "#337F7A"
+                              },
+                              {
+                                   "name": "Blue 900",
+                                   "slug": "blue-900",
+                                   "color": "#154256"
+                              },
+                              {
+                                   "name": "Black",
+                                   "slug": "black",
+                                   "color": "#000"
+                              }
+                         ]
+                    }
+               },
+               "core/post-featured-image": {
+                    "border": { "color": true, "width": true }
+               }
+          }
+     },
+     "styles": {
+          "typography": {
+               "fontFamily": "var:preset|font-family|untitled-sans",
+               "fontSize": "var:preset|font-size|medium",
+               "lineHeight": "1.5"
+          },
+          "blocks": {
+               "core/button": {
+                    "border": {
+                         "radius": "0",
+                         "bottom": {
+                              "color": "var:preset|color|teal",
+                              "style": "solid",
+                              "width": "3px"
+                         }
+                    },
+                    "color": {
+                         "background": "transparent",
+                         "text": "currentColor"
+                    },
+                    "spacing": {
+                         "padding": {
+                              "top": "4px",
+                              "right": "4px",
+                              "bottom": "4px",
+                              "left": "4px"
+                         }
+                    }
+               },
+               "core/cover": { "typography": { "lineHeight": "calc(4/3)" } },
+               "core/more": { "css": "& input{ text-transform: none; }" }
+          }
+     }
+}
