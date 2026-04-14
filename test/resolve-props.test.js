@@ -1,4 +1,4 @@
-import { expect, test, describe } from "vitest";
+import { expect, test, describe, vi } from "vitest";
 import { readFile } from "node:fs/promises";
 
 import $RefParser from "@apidevtools/json-schema-ref-parser";
@@ -7,12 +7,16 @@ import { getSchema } from "../lib/get-schema.js";
 import { resolveProps, flattenProps } from "../lib/resolve-props.js";
 
 describe("resolveProps", async () => {
-  const schema = await getSchema({}, 'fake/theme.json' );
+  const consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+  const consoleErrSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+  const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+  const schema = await getSchema({}, "fake/theme.json");
   await $RefParser.dereference(schema);
 
   test("flattenProps allOf", async () => {
     const fakeSchema = JSON.parse(
-      await readFile(`./test/fixtures/all-of/nested-all-of.json`)
+      await readFile(`./test/fixtures/all-of/nested-all-of.json`),
     );
 
     const actual = flattenProps({}, fakeSchema.properties.styles.allOf);
@@ -29,7 +33,7 @@ describe("resolveProps", async () => {
 
   test("flattenProps anyOf", async () => {
     const fakeSchema = JSON.parse(
-      await readFile(`./test/fixtures/any-of/radius-props.json`)
+      await readFile(`./test/fixtures/any-of/radius-props.json`),
     );
 
     const actual = flattenProps({}, fakeSchema.properties.radius.anyOf);
@@ -44,7 +48,7 @@ describe("resolveProps", async () => {
 
   test("flattenProps nested anyOf", async () => {
     const fakeSchema = JSON.parse(
-      await readFile(`./test/fixtures/any-of/nested-any-of.json`)
+      await readFile(`./test/fixtures/any-of/nested-any-of.json`),
     );
 
     const actual = flattenProps({}, fakeSchema.properties.styles.anyOf);
@@ -61,7 +65,7 @@ describe("resolveProps", async () => {
 
   test("flattenProps oneOf", async () => {
     const fakeSchema = JSON.parse(
-      await readFile(`./test/fixtures/one-of/fluid-one-of.json`)
+      await readFile(`./test/fixtures/one-of/fluid-one-of.json`),
     );
 
     const actual = flattenProps({}, fakeSchema.properties.fluid.oneOf);
@@ -71,7 +75,7 @@ describe("resolveProps", async () => {
 
   test("anyOf for coverage", async () => {
     const fakeSchema = JSON.parse(
-      await readFile(`./test/fixtures/any-of/nested-any-of.json`)
+      await readFile(`./test/fixtures/any-of/nested-any-of.json`),
     );
 
     const actual = resolveProps(fakeSchema.properties);
@@ -87,7 +91,7 @@ describe("resolveProps", async () => {
 
   test("oneOf for coverage", async () => {
     const fakeSchema = JSON.parse(
-      await readFile(`./test/fixtures/one-of/fluid-one-of.json`)
+      await readFile(`./test/fixtures/one-of/fluid-one-of.json`),
     );
 
     const actual = resolveProps(fakeSchema.properties);
@@ -104,7 +108,6 @@ describe("resolveProps", async () => {
    * both should be merged.
    */
   test("Settings properties", async () => {
-
     const actual = resolveProps(schema.properties);
 
     expect(actual).toHaveProperty("settings");

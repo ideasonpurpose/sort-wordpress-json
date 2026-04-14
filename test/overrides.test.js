@@ -1,8 +1,7 @@
 import { expect, test, describe } from "vitest";
 import { schemaSort } from "../lib/schema-sort.js";
-// import { getSchema } from "../lib/get-schema.js";
 
-import { readdir, readFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 
 describe("Overrides", async () => {
   test("empty schema", async () => {
@@ -10,7 +9,7 @@ describe("Overrides", async () => {
     const input = JSON.parse(src);
 
     const expected = JSON.parse(
-      await readFile(`./test/fixtures/overrides/simple-theme-override.json`)
+      await readFile(`./test/fixtures/overrides/simple-theme-override.json`),
     );
 
     const schema = {};
@@ -18,9 +17,7 @@ describe("Overrides", async () => {
 
     const actual = await schemaSort(input, schema, overrides);
 
-    console.log({actual, expected});
-    // const actual = await schemaSort(expected, schema);
     expect(actual).toHaveProperty("settings.color.custom");
-    expect (actual).toStrictEqual(expected)
+    expect(actual).toStrictEqual(expected);
   });
 });

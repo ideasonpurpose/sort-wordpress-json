@@ -1,12 +1,8 @@
 import { expect, test, describe, vi, beforeEach } from "vitest";
-import { readFile, writeFile } from "fs/promises";
 import { coerceIndent, writeOutput, main } from "../cli.js";
 
-// // Mock the fs promises
-// vi.mock("fs/promises", () => ({
-//   readFile: vi.fn(),
-//   writeFile: vi.fn(),
-// }));
+// Mock fs/promises
+vi.mock("fs/promises", () => ({ writeFile: vi.fn() }));
 
 // // Mock detectIndent
 // vi.mock("detect-indent", () => ({
@@ -67,3 +63,43 @@ describe("coerceInput helper", () => {
   });
 });
 
+describe("writeOutput", async () => {
+  const consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+  const consoleErrSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+  const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+  const { writeFile } = vi.mocked(await import("fs/promises"));
+
+  const fakePath = "test/path.json";
+  const fakeContent = "formatted content";
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("dry run with TTY", async () => {
+    vi.spyOn(process, "stdout", "get").mockReturnValue({ isTTY: true });
+
+    await writeOutput(fakePath, fakeContent, true);
+
+    expect(consoleLogSpy.mock.calls[0][0]).toMatch(/Dry run/);
+    expect(consoleLogSpy).toHaveBeenCalledWith(fakeContent);
+    expect(writeFile).not.toHaveBeenCalled();
+  });
+
+  test("dry run without TTY", async () => {
+    vi.spyOn(process, "stdout", "get").mockReturnValue({ isTTY: false });
+
+    await writeOutput(fakePath, fakeContent, true);
+
+    expect(consoleLogSpy).toHaveBeenCalledWith(fakeContent);
+    expect(writeFile).not.toHaveBeenCalled();
+  });
+
+  test("not dry run", async () => {
+    await writeOutput(fakePath, fakeContent, false);
+
+    expect(writeFile).toHaveBeenCalledWith(fakePath, fakeContent);
+    expect(consoleLogSpy).not.toHaveBeenCalled();
+  });
+});

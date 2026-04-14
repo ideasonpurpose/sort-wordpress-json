@@ -1,10 +1,14 @@
 import { readFile, writeFile } from "node:fs/promises";
-import { expect, test, describe } from "vitest";
+import { expect, test, describe, vi } from "vitest";
 
 import { getSchema } from "../lib/get-schema.js";
 import { schemaSort, walkSchema } from "../lib/schema-sort.js";
 
 describe("schemaSort", async () => {
+  const consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+  const consoleErrSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+  const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
   const schema = await getSchema({}, "theme.json");
 
   test("Requires a schema", async () => {
@@ -15,7 +19,7 @@ describe("schemaSort", async () => {
     const path = "....x....x....x....x".split("");
     const schema = { properties: { key: {} } };
     expect(() => walkSchema(schema, {}, {}, path)).toThrow(
-      "We're in too deep!"
+      "We're in too deep!",
     );
   });
 
@@ -24,7 +28,7 @@ describe("schemaSort", async () => {
     const input = JSON.parse(src);
 
     const expected = JSON.parse(
-      await readFile(`./test/fixtures/sort/bare-theme-sorted.json`)
+      await readFile(`./test/fixtures/sort/bare-theme-sorted.json`),
     );
 
     const actual = await schemaSort(input, schema);
@@ -33,7 +37,7 @@ describe("schemaSort", async () => {
 
     expect(actual).toEqual(expected);
     expect(JSON.stringify(actual, null, 2)).toBe(
-      JSON.stringify(expected, null, 2)
+      JSON.stringify(expected, null, 2),
     );
   });
 
@@ -42,7 +46,7 @@ describe("schemaSort", async () => {
     const input = JSON.parse(src);
 
     const expected = JSON.parse(
-      await readFile(`./test/fixtures/sort/simple-theme-sorted.json`)
+      await readFile(`./test/fixtures/sort/simple-theme-sorted.json`),
     );
 
     const actual = await schemaSort(input, schema);
@@ -51,7 +55,7 @@ describe("schemaSort", async () => {
 
     expect(actual).toEqual(expected);
     expect(JSON.stringify(actual, null, 2)).toBe(
-      JSON.stringify(expected, null, 2)
+      JSON.stringify(expected, null, 2),
     );
   });
 
@@ -60,19 +64,19 @@ describe("schemaSort", async () => {
     const input = JSON.parse(src);
 
     const expected = JSON.parse(
-      await readFile(`./test/fixtures/sort/box-dimensions-sorted.json`)
+      await readFile(`./test/fixtures/sort/box-dimensions-sorted.json`),
     );
 
     const actual = await schemaSort(input, schema);
 
     await writeFile(
       `./tmp/box-dimensions.json`,
-      JSON.stringify(actual, null, 2)
+      JSON.stringify(actual, null, 2),
     );
 
     expect(actual).toEqual(expected);
     expect(JSON.stringify(actual, null, 2)).toBe(
-      JSON.stringify(expected, null, 2)
+      JSON.stringify(expected, null, 2),
     );
   });
 
@@ -81,19 +85,19 @@ describe("schemaSort", async () => {
     const input = JSON.parse(src);
 
     const expected = JSON.parse(
-      await readFile(`./test/fixtures/sort/simple-3-levels-sorted.json`)
+      await readFile(`./test/fixtures/sort/simple-3-levels-sorted.json`),
     );
 
     const actual = await schemaSort(input, schema);
 
     await writeFile(
       `./tmp/simple-3-levels.json`,
-      JSON.stringify(actual, null, 2)
+      JSON.stringify(actual, null, 2),
     );
 
     expect(actual).toEqual(expected);
     expect(JSON.stringify(actual, null, 2)).toBe(
-      JSON.stringify(expected, null, 2)
+      JSON.stringify(expected, null, 2),
     );
   });
 
@@ -104,62 +108,73 @@ describe("schemaSort", async () => {
     const input = JSON.parse(src);
 
     const expected = JSON.parse(
-      await readFile(`./test/fixtures/sort/nested-array-theme-sorted.json`)
+      await readFile(`./test/fixtures/sort/nested-array-theme-sorted.json`),
     );
 
     const actual = await schemaSort(input, schema);
 
     await writeFile(
       `./tmp/nested-array-theme.json`,
-      JSON.stringify(actual, null, 2)
+      JSON.stringify(actual, null, 2),
     );
     expect(actual).toEqual(expected);
     expect(JSON.stringify(actual, null, 2)).toBe(
-      JSON.stringify(expected, null, 2)
+      JSON.stringify(expected, null, 2),
     );
   });
 
   test("sort extra-stuff-at-the-end.json", async () => {
     const src = await readFile(
-      `./test/fixtures/sort/extra-stuff-at-the-end.json`
+      `./test/fixtures/sort/extra-stuff-at-the-end.json`,
     );
     const input = JSON.parse(src);
 
     const expected = JSON.parse(
-      await readFile(`./test/fixtures/sort/extra-stuff-at-the-end-sorted.json`)
+      await readFile(`./test/fixtures/sort/extra-stuff-at-the-end-sorted.json`),
     );
 
     const actual = await schemaSort(input, schema);
 
     await writeFile(
       `./tmp/extra-stuff-at-the-end.json`,
-      JSON.stringify(actual, null, 2)
+      JSON.stringify(actual, null, 2),
     );
     expect(actual).toEqual(expected);
     expect(JSON.stringify(actual, null, 2)).toBe(
-      JSON.stringify(expected, null, 2)
+      JSON.stringify(expected, null, 2),
     );
+  });
+
+  test("Do not overwrite existing values in dest", async () => {
+    const schema = { properties: {} }; // No properties, so 'extra' is an extra key
+    const src = { extra: "newValue" };
+    const dest = { extra: "existingValue" };
+
+    const result = walkSchema(schema, src, dest);
+
+    // Since dest already has 'extra', it should not be overwritten
+    expect(result.extra).toBe("existingValue");
   });
 
   test("sort sort-blocks-elements.json", async () => {
     const src = await readFile(
-      `./test/fixtures/sort/sort-blocks-elements.json`
+      `./test/fixtures/sort/sort-blocks-elements.json`,
     );
     const input = JSON.parse(src);
 
     const expected = JSON.parse(
-      await readFile(`./test/fixtures/sort/sort-blocks-elements-sorted.json`)
+      await readFile(`./test/fixtures/sort/sort-blocks-elements-sorted.json`),
     );
 
     const actual = await schemaSort(input, schema);
 
     await writeFile(
       `./tmp/sort-blocks-elements.json`,
-      JSON.stringify(actual, null, 2)
+      JSON.stringify(actual, null, 2),
     );
     expect(actual).toEqual(expected);
     expect(JSON.stringify(actual, null, 2)).toBe(
-      JSON.stringify(expected, null, 2)
+      JSON.stringify(expected, null, 2),
     );
   });
 
@@ -168,16 +183,15 @@ describe("schemaSort", async () => {
     const input = JSON.parse(src);
 
     const expected = JSON.parse(
-      await readFile(`./test/fixtures/sort/units-array-sorted.json`)
+      await readFile(`./test/fixtures/sort/units-array-sorted.json`),
     );
 
-    console.log(schema);
     const actual = await schemaSort(input, schema);
 
     await writeFile(`./tmp/units-array.json`, JSON.stringify(actual, null, 2));
     expect(actual).toEqual(expected);
     expect(JSON.stringify(actual, null, 2)).toBe(
-      JSON.stringify(expected, null, 2)
+      JSON.stringify(expected, null, 2),
     );
   });
 
@@ -186,7 +200,7 @@ describe("schemaSort", async () => {
     const input = JSON.parse(src);
 
     const expected = JSON.parse(
-      await readFile(`./test/fixtures/sort/iop-theme-sorted.json`)
+      await readFile(`./test/fixtures/sort/iop-theme-sorted.json`),
     );
 
     const actual = await schemaSort(input, schema);
@@ -194,7 +208,7 @@ describe("schemaSort", async () => {
     await writeFile(`./tmp/iop-theme.json`, JSON.stringify(actual, null, 2));
     expect(actual).toEqual(expected);
     expect(JSON.stringify(actual, null, 2)).toBe(
-      JSON.stringify(expected, null, 2)
+      JSON.stringify(expected, null, 2),
     );
   });
 
@@ -203,7 +217,7 @@ describe("schemaSort", async () => {
     const input = JSON.parse(src);
 
     const expected = JSON.parse(
-      await readFile(`./test/fixtures/sort/gwbs-theme-sorted.json`)
+      await readFile(`./test/fixtures/sort/gwbs-theme-sorted.json`),
     );
 
     const actual = await schemaSort(input, schema);
@@ -211,36 +225,32 @@ describe("schemaSort", async () => {
     await writeFile(`./tmp/gwbs-theme.json`, JSON.stringify(actual, null, 2));
     expect(actual).toEqual(expected);
     expect(JSON.stringify(actual, null, 2)).toBe(
-      JSON.stringify(expected, null, 2)
+      JSON.stringify(expected, null, 2),
     );
   });
 
+  //   test("sort gravity-forms simple-test-form.json", async () => {
 
+  // const schema =
 
-//   test("sort gravity-forms simple-test-form.json", async () => {
+  //     const src = await readFile(
+  //       `./test/fixtures/gravity-forms/simple-test-form.json`
+  //     );
+  //     const input = JSON.parse(src);
 
-// const schema =
+  //     const expected = JSON.parse(
+  //       await readFile(`./test/fixtures/gravity-forms/simple-test-form-sorted.json`)
+  //     );
 
-//     const src = await readFile(
-//       `./test/fixtures/gravity-forms/simple-test-form.json`
-//     );
-//     const input = JSON.parse(src);
+  //     const actual = await schemaSort(input, schema);
 
-//     const expected = JSON.parse(
-//       await readFile(`./test/fixtures/gravity-forms/simple-test-form-sorted.json`)
-//     );
-
-//     const actual = await schemaSort(input, schema);
-
-//     await writeFile(
-//       `./tmp/gravity-forms-simple-test-form.json`,
-//       JSON.stringify(actual, null, 2)
-//     );
-//     expect(actual).toEqual(expected);
-//     expect(JSON.stringify(actual, null, 2)).toBe(
-//       JSON.stringify(expected, null, 2)
-//     );
-//   });
-
-
+  //     await writeFile(
+  //       `./tmp/gravity-forms-simple-test-form.json`,
+  //       JSON.stringify(actual, null, 2)
+  //     );
+  //     expect(actual).toEqual(expected);
+  //     expect(JSON.stringify(actual, null, 2)).toBe(
+  //       JSON.stringify(expected, null, 2)
+  //     );
+  //   });
 });

@@ -59,8 +59,6 @@ export async function main(argv) {
 
   const updatedFiles = filesToProcess
     .map((file) => resolve(file))
-
-    // console.log(process.cwd(), updatedFiles);
     .map((filepath) => processFile(filepath, argIndent));
 
   (await Promise.all(updatedFiles)).forEach((result) => {
@@ -97,6 +95,7 @@ export function coerceIndent(n) {
   return false;
 }
 
+/* v8 ignore start */
 if (import.meta.url === `file://${process.argv[1]}`) {
   yargs(hideBin(process.argv))
     .command(
@@ -158,3 +157,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     .showHelpOnFail(false)
     .version(packageJson.version).argv;
 }
+/* v8 ignore stop */

@@ -11,6 +11,10 @@ vi.mock("@apidevtools/json-schema-ref-parser", () => ({
 }));
 
 describe("getSchema Tests", async () => {
+  const consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+  const consoleErrSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+  const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
   const $RefParser = (await import("@apidevtools/json-schema-ref-parser"))
     .default;
 
@@ -21,7 +25,7 @@ describe("getSchema Tests", async () => {
   const fakeLocal = "../local_schema/fake_schema.json";
 
   beforeEach(() => {
-    vi.resetAllMocks();
+    bundleMock.mockReset(); // Or mockClear() if you prefer to keep mock history
   });
 
   test("load remote schema", async () => {
@@ -45,7 +49,7 @@ describe("getSchema Tests", async () => {
   });
 
   test("remote fails, use fallback", async () => {
-    bundleMock.mockThrowOnce(new Error("mock rejection 1"));
+    bundleMock.mockThrowOnce(new Error("mock rejection"));
     getLocalSchemaPathMock.mockReturnValue(fakeLocal);
     await getSchema({ $schema: fakeSrc }, fakeLocal, getLocalSchemaPathMock);
 
@@ -55,9 +59,8 @@ describe("getSchema Tests", async () => {
     expect(getLocalSchemaPathMock).toHaveBeenCalledWith(fakeLocal);
   });
 
-  test("remote fails, fallback fails ", async () => {
-    bundleMock.mockThrowOnce(new Error("mock rejection 1"));
-    bundleMock.mockThrowOnce(new Error("mock rejection 2"));
+  test("remote fails, no fallback ", async () => {
+    bundleMock.mockThrowOnce(new Error("mock rejection"));
     getLocalSchemaPathMock.mockReturnValue(null);
 
     const actual = await getSchema(
@@ -67,6 +70,24 @@ describe("getSchema Tests", async () => {
     );
 
     expect(bundleMock).toHaveBeenCalledTimes(1);
+    expect(bundleMock).toHaveBeenCalledWith(fakeSrc);
+    expect(getLocalSchemaPathMock).toHaveBeenCalledWith(fakeLocal);
+
+    expect(actual).toEqual(false);
+  });
+
+  test("remote fails, fallback fails ", async () => {
+    bundleMock.mockThrowOnce(new Error("mock rejection 1"));
+    bundleMock.mockThrowOnce(new Error("mock rejection 2"));
+    getLocalSchemaPathMock.mockReturnValue("fake/path");
+
+    const actual = await getSchema(
+      { $schema: fakeSrc },
+      fakeLocal,
+      getLocalSchemaPathMock,
+    );
+
+    expect(bundleMock).toHaveBeenCalledTimes(2);
     expect(bundleMock).toHaveBeenCalledWith(fakeSrc);
     expect(getLocalSchemaPathMock).toHaveBeenCalledWith(fakeLocal);
 
