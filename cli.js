@@ -8,15 +8,25 @@ import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import packageJson from "./package.json" with { type: "json" };
 
-import { getSchema } from "./lib/get-schema.js";
-import { schemaSort } from "./lib/schema-sort.js";
-import { formatWPJson } from "./lib/format-wp-json.js";
-import { validateJsonData } from "./lib/validateJsonData.js";
+import { findThemeFiles } from "./lib/find-files.js";
+import { processFile } from "./lib/process-file.js";
 
-import { readFile, writeFile } from "fs/promises";
 import { resolve } from "path";
 
-import detectIndent from "detect-indent";
+import { writeFile } from "fs/promises";
+import fg from "fast-glob";
+import chalk from "chalk";
+
+export async function writeOutput(fullPath, formatted, dryRun) {
+  if (dryRun) {
+    if (process.stdout.isTTY) {
+      console.log(`Dry run: would write to ${fullPath}`);
+    }
+    console.log(formatted);
+  } else {
+    await writeFile(fullPath, formatted);
+  }
+}
 
 /**
  * @param {import('./types.d.ts').CliArgs} argv
@@ -25,47 +35,66 @@ export async function main(argv) {
   const {
     file: argFile,
     indent: argIndent,
-    schema: argSchema,
-    overrides: argOverrides = [],
+    overrides: argOverrides,
+    expansions: argExpansions,
     noDefaultOverrides,
     dryRun,
   } = argv;
-  if (!argFile) {
-    throw new Error("No input file provided");
-  }
 
-  try {
-    const fullPath = resolve(argFile);
-
-    // Check if file exists
-    // const fs = await import("fs");
-    // if (!fs.existsSync(fullPath)) {
-    //   throw new Error(`Input file does not exist: ${fullPath}`);
-    // }
-
-    const rawFile = (await readFile(fullPath, "utf8")).toString();
-    const newIndent = argIndent || detectIndent(rawFile);
-
-    const originalJson = JSON.parse(rawFile); // Throws if invalid JSON
-    // const schema = await getSchema(originalJson, schemaUrl); // Pass optional schemaUrl
-    const _schema = await getSchema(originalJson); // Pass optional schemaUrl
-    // const effectiveOverrides = noDefaultOverrides ? [] : overrides; // Handle no-default-overrides
-    // const sortedJson = await schemaSort(originalJson, schema, effectiveOverrides);
-    const sortedJson = await schemaSort(originalJson, _schema);
-    const validated = validateJsonData(originalJson, sortedJson);
-
-    const formatted = await formatWPJson(validated, newIndent);
-    if (dryRun) {
-      // console.log(`Dry run: would write to ${fullPath}`);
-      console.log(formatted);
-    } else {
-      await writeFile(fullPath, formatted);
-      console.log(`Successfully sorted and formatted: ${fullPath}`);
+  let filesToProcess = [];
+  if (argFile) {
+    filesToProcess = await fg(argFile);
+    if (filesToProcess.length === 0) {
+      console.error(`No files found matching pattern: ${argFile}`);
+      return;
     }
-  } catch (error) {
-    console.error(`Error processing file: ${error.message}`);
-    throw error; // Re-throw for CLI handling
+  } else {
+    filesToProcess = await findThemeFiles(process.cwd());
+    if (!filesToProcess.includes("theme.json")) {
+      console.error("No theme.json file found.");
+      return;
+    }
+    console.log(`Found ${filesToProcess.length} files to process:`);
   }
+
+  const updatedFiles = filesToProcess
+    .map((file) => resolve(file))
+
+    // console.log(process.cwd(), updatedFiles);
+    .map((filepath) => processFile(filepath, argIndent));
+
+  (await Promise.all(updatedFiles)).forEach((result) => {
+    const relPath = result.file.replace(process.cwd(), "").replace(/^\/*/, "");
+    if (result.status === "success") {
+      writeOutput(result.fullPath, result.content, dryRun);
+      console.log(chalk.green(`Successfully processed ${relPath}`));
+    } else if (result.status === "skipped") {
+      console.warn(chalk.yellow(`Skipped ${relPath}: ${result.reason}`));
+    } else if (result.status === "error") {
+      console.error(chalk.red(`Error processing ${relPath}: ${result.reason}`));
+      console.error(chalk.red(result.error.stack));
+    }
+  });
+}
+
+/**
+ * Coerces an indentation value into a standardized object format.
+ * The ten character limit comes from JSON.stringify's maximum supported indentation.
+ * @param {string|number} n - The indentation value to coerce. Accepts 'tabs', 'tab', or a number (0-10).
+ * @returns {Object|false} An object with properties {amount: number, indent: string, type: string} for valid inputs, or false for invalid values.
+ */
+export function coerceIndent(n) {
+  const strN = String(n);
+  if (["tabs", "tab"].includes(strN)) {
+    return { amount: 1, indent: "\t", type: "tab" };
+  }
+  // Numbers will be clamped from 0-10, or NaN
+  let i = Math.min(Math.max(parseInt(strN, 10), 0), 10);
+  if (!isNaN(i)) {
+    return { amount: i, indent: "".padEnd(i, " "), type: "space" };
+  }
+  // 'inherit' and all non-numeric values return false
+  return false;
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
@@ -78,47 +107,41 @@ if (import.meta.url === `file://${process.argv[1]}`) {
           .positional("file", {
             type: "string",
             normalize: true,
-            required: true,
+            required: false,
             describe: "File path or glob pattern",
-          })
-          .option("schema", {
-            type: "string",
-            describe:
-              "Specify a schema, will override any $schema properties in the files",
-            default: false,
           })
           .option("indent", {
             type: "string",
+            alias: "t",
             describe:
               "Set indent to some number of spaces. 0 returns a condensed file. " +
-              "Indentation will be clamped between 0-16. " +
+              "Indentation will be clamped between 0-10. " +
               "Out of deference to WordPress conventions, output files will be " +
               "indented with tabs by default or if no number is provided. " +
               "Also accepts 'tab', 'tabs' and 'inherit' (default)",
             default: "inherit",
-            coerce: (n) => {
-              if (["tabs", "tab"].includes(n)) {
-                return { amount: 1, indent: "\t", type: "tab" };
-              }
-              // Numbers will be clamped from 0-16, or NaN
-              let i = Math.min(Math.max(parseInt(n, 10), 0), 16);
-              if (!isNaN(i)) {
-                return { amount: i, indent: "".padEnd(i, " "), type: "space" };
-              }
-              // 'inherit' and all non-numeric values return false
-              return false;
-            },
-          })
-          .option("no-default-overrides", {
-            type: "boolean",
-            describe: "Disable default overrides",
-            default: false,
+            coerce: coerceIndent,
           })
           .option("overrides", {
             type: "array",
-            describe: "A list of override keys like settings.color.custom",
+            describe:
+              "A list of override keys like 'settings.color.custom' to force to the top. Force nodes to the bottom by prefixing their paths with an exclamation point like '!settings.color.duotone'",
+            default: [],
+          })
+
+          .option("no-overrides", {
+            type: "boolean",
+            describe:
+              "Disable overrides. Use with --overrides to specify only custom overrides",
             default: false,
           })
+          .option("expansions", {
+            type: "array",
+            describe:
+              "A list of expansion keys like 'settings.typography.fontSizes'. Collapse nodes by prefixing with an exclamation point like '!settings.color.palette'",
+            default: [],
+          })
+
           .option("dry-run", {
             alias: "n",
             type: "boolean",
@@ -130,9 +153,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         return await main(/** @type {import('./types.d.ts').CliArgs} */ (argv));
       },
     )
+    .demandCommand(0)
     .help()
-    .version(packageJson.version)
-    .updateStrings({
-      "Positionals:": "Input File/glob:",
-    }).argv;
+    .showHelpOnFail(false)
+    .version(packageJson.version).argv;
 }
