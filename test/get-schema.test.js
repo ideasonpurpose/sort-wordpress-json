@@ -1,5 +1,7 @@
 import { describe, expect, test, vi, beforeEach } from "vitest";
-import { getSchema } from "../lib/get-schema.js";
+import * as getSchemaModule from "../lib/get-schema.js";
+
+const { getSchema, getLocalSchemaPath } = getSchemaModule;
 
 // Mock the entire module
 vi.mock("@apidevtools/json-schema-ref-parser", () => ({
@@ -13,6 +15,10 @@ describe("getSchema Tests", async () => {
     .default;
 
   const bundleMock = $RefParser.bundle;
+  const getLocalSchemaPathMock = vi.fn();
+
+  const fakeSrc = "https://example.com/fake_schema.json";
+  const fakeLocal = "../local_schema/fake_schema.json";
 
   beforeEach(() => {
     vi.resetAllMocks();
@@ -21,36 +27,62 @@ describe("getSchema Tests", async () => {
   test("load remote schema", async () => {
     bundleMock.mockResolvedValue({ fake: "schema" });
 
-    const fakeSrc = { $schema: "https://example.com/schema.json" };
-    await getSchema(fakeSrc);
+    await getSchema({ $schema: fakeSrc });
 
-    expect(bundleMock)
-      .toHaveBeenCalledTimes(1)
-      .toHaveBeenCalledWith("https://example.com/schema.json");
+    expect(bundleMock).toHaveBeenCalledTimes(1);
+    expect(bundleMock).toHaveBeenCalledWith(fakeSrc);
   });
 
-  test("remote fails, fallback to local", async () => {
-    bundleMock.mockRejectedValueOnce(new Error("mock rejection"));
-    bundleMock.mockResolvedValueOnce({ fake: "schema" });
+  test("remote fails, no fallback", async () => {
+    bundleMock.mockThrowOnce(new Error("mock rejection 1"));
 
-    const fakeSrc = { $schema: "https://example.com/schema.json" };
+    const actual = await getSchema({ $schema: fakeSrc });
 
-    await getSchema(fakeSrc);
+    expect(bundleMock).toHaveBeenCalledTimes(1);
+    expect(bundleMock).toHaveBeenCalledWith(fakeSrc);
 
-    expect(bundleMock)
-      .toHaveBeenCalledTimes(2)
-      .toHaveBeenCalledWith("https://example.com/schema.json")
-      .toHaveBeenCalledWith("schema/theme.json");
+    expect(actual).toEqual(false);
   });
 
-  test("should fallback to local with no input", async () => {
+  test("remote fails, use fallback", async () => {
+    bundleMock.mockThrowOnce(new Error("mock rejection 1"));
+    getLocalSchemaPathMock.mockReturnValue(fakeLocal);
+    await getSchema({ $schema: fakeSrc }, fakeLocal, getLocalSchemaPathMock);
 
-    bundleMock.mockResolvedValueOnce({ fake: "schema" });
+    expect(bundleMock).toHaveBeenCalledTimes(2);
+    expect(bundleMock).toHaveBeenCalledWith(fakeSrc);
+    expect(bundleMock).toHaveBeenCalledWith(fakeLocal);
+    expect(getLocalSchemaPathMock).toHaveBeenCalledWith(fakeLocal);
+  });
 
-    await getSchema();
+  test("remote fails, fallback fails ", async () => {
+    bundleMock.mockThrowOnce(new Error("mock rejection 1"));
+    bundleMock.mockThrowOnce(new Error("mock rejection 2"));
+    getLocalSchemaPathMock.mockReturnValue(null);
 
-    expect(bundleMock)
-      .toHaveBeenCalledTimes(1)
-      .toHaveBeenCalledWith("schema/theme.json");
+    const actual = await getSchema(
+      { $schema: fakeSrc },
+      fakeLocal,
+      getLocalSchemaPathMock,
+    );
+
+    expect(bundleMock).toHaveBeenCalledTimes(1);
+    expect(bundleMock).toHaveBeenCalledWith(fakeSrc);
+    expect(getLocalSchemaPathMock).toHaveBeenCalledWith(fakeLocal);
+
+    expect(actual).toEqual(false);
+  });
+});
+
+describe("getLocalSchema helper", async () => {
+  test("get local schema for theme.json", async () => {
+    const localSchemaPath = getLocalSchemaPath("somefile/theme.json");
+    expect(localSchemaPath).toBeTruthy();
+    expect(localSchemaPath).toMatch(/theme\.json$/);
+  });
+
+  test("no matching local schema", async () => {
+    const localSchemaPath = getLocalSchemaPath("somefile/nope.json");
+    expect(localSchemaPath).toBeNull();
   });
 });
