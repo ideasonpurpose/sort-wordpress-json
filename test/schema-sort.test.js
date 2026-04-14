@@ -5,7 +5,7 @@ import { getSchema } from "../lib/get-schema.js";
 import { schemaSort, walkSchema } from "../lib/schema-sort.js";
 
 describe("schemaSort", async () => {
-  const schema = await getSchema();
+  const schema = await getSchema({}, "theme.json");
 
   test("Requires a schema", async () => {
     await expect(schemaSort({ some: "data" })).rejects.toThrow();
@@ -14,7 +14,7 @@ describe("schemaSort", async () => {
   test("Recursion limit", () => {
     const path = "....x....x....x....x".split("");
     const schema = { properties: { key: {} } };
-    expect(() => walkSchema(schema, {}, {}, path)).toThrowError(
+    expect(() => walkSchema(schema, {}, {}, path)).toThrow(
       "We're in too deep!"
     );
   });
@@ -171,6 +171,7 @@ describe("schemaSort", async () => {
       await readFile(`./test/fixtures/sort/units-array-sorted.json`)
     );
 
+    console.log(schema);
     const actual = await schemaSort(input, schema);
 
     await writeFile(`./tmp/units-array.json`, JSON.stringify(actual, null, 2));
