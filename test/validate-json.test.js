@@ -29,9 +29,17 @@ describe("Validate JSON", async () => {
     );
   });
 
+  test("Check invalid original JSON string", async () => {
+    const original = "not JSON";
+    const sorted = "{ b: 2, a: 1 }"; // Invalid JSON (keys must be in double quotes)
+    expect(() => validateJson(original, sorted)).toThrow(
+      "Original is not valid JSON",
+    );
+  });
+
   test("Check invalid sorted JSON string", async () => {
     const original = JSON.stringify({ a: 1, b: 2 });
-    const sorted = "{ b: 2, a: 1 }"; // Invalid JSON (keys must be in double quotes)
+    const sorted = "not JSON";
     expect(() => validateJson(original, sorted)).toThrow(
       "Sorted is not valid JSON",
     );
