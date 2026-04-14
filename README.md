@@ -1,55 +1,52 @@
 # Sort WordPress JSON
 
-
 #### Version 0.0.1
 
 > "Things should be where things should be."
 
-Enforcing property order makes development and debugging faster because we know where properties should be. This project was largely inspired by [sort-package-json](https://github.com/keithamus/sort-package-json), but takes a different approach and deep-sorts WordPress JSON files according to their schema.
+Enforcing property order makes development and debugging faster because we know where properties should be. This project was largely inspired by [sort-package-json](https://github.com/keithamus/sort-package-json), but takes a different approach: Both deep-sorting WordPress JSON files according to their schemas and formatting for consistency and easier reading.
 
-## Why?
+### Why?
 
-As JSON files take a larger role in WordPress development, navigating these files becomes slower. The files tend to grow organically during development, with declarations added as needed, usually at the end, resulting in files that are an organic mess of ad hoc additions.
+As JSON has become central to WordPress development, our files often become a mess of organic, as-needed additions. Without an enforced order, editing **theme.json** files gets slower and comparing them across projects becomes nearly impossible, wasting time and frustrating developers.
 
-Without a strongly enforced order, diffing theme.json files across projects is nearly useless. If a new property is added to one project, not being able to immediately diff the updated json files against an older project leads to wasted effort and mis-used dev time.
+## Installation
 
-This packages takes the [published WordPress schemas](https://github.com/WordPress/gutenberg/tree/trunk/schemas) as the source of truth, and uses their published property order as a baseline for re-ordering a file's properties.
+This is a pre-release work in progress. Use at your own risk. Install direct from GitHub:
 
-Files should include a $schema property. This tool will attempt to use the linked schema, and will fall back to a local copy which are synced from the WordPress source repo whenever this package is updated. These three schema are bundled:
+```sh
+npm install github:ideasonpurpose/sort-wordpress-json
+```
 
-- https://schemas.wp.org/trunk/theme.json
-- https://schemas.wp.org/trunk/block.json
-- https://schemas.wp.org/trunk/font-collection.json
+## Sorting theme files
 
-### No really, this is better
+This tool modifies files. Use version control.
 
-Much as [package.json](https://docs.npmjs.com/cli/v9/configuring-npm/package-json#description), [composer.json](https://getcomposer.org/doc/04-schema.md) and a of CSS linting projects [stylelint-order](https://github.com/hudochenkov/stylelint-order) assert a more useful, logical order for properties, this project also takes an opinionated stance on property order.
+Run `sort-wp-json` from the root of your WordPress theme. If the directory does not contain a **theme.json** file, the tool will exit immediately.
 
+If a **theme.json** file is found, the tool will search for additional WordPress JSON files below the current directory. It should find and format all of the following:
 
-### Don't sort that
+- `./theme.json`
+- `./styles/**/\*.json`
+- `./**/block.json`
 
-Because some enumerable collections like sizes are also directly exposed to content authors, those will remain unsorted. Lists of options like color palettes, font listings and sizes may be arranged in a specific order and will pass through unchanged.
+The tool will not search in **node_modules/**, **vendor/** or **acf-json/**
 
-## Notes and References
+All found files named **theme.json** and **block.json** will be sorted and formatted. Additional JSON files containing a valid schema will be sorted and formatted. If a **theme.json** or **block.json** files are found without a schema, the appropriate schema will be added, then the files will be sorted and formatted.
 
-WordPress json schema overview and explanations:
+### Safety Checks
 
-https://developer.wordpress.org/news/2024/07/json-schema-in-wordpress/
+Before writing a file, the tool checks the resulting JSON for deep-equality with the original source JSON. This ensures the only changes were cosmetic and the data is the identical.
 
-WordPress schema source sub-repo (in Gutenberg)
-https://github.com/WordPress/gutenberg/tree/trunk/schemas
+## Overrides and Expansions
 
-This uses the [**json-schema-ref-parser**](https://www.npmjs.com/package/@apidevtools/json-schema-ref-parser) for de-reffing JSON schema's so we can loop over their properties more easily.
+Much as [package.json](https://docs.npmjs.com/cli/v9/configuring-npm/package-json#description), [composer.json](https://getcomposer.org/doc/04-schema.md) and CSS linting projects like [stylelint-order](https://github.com/hudochenkov/stylelint-order) assert a more useful, logical order for properties, this project also has strong opinions on property order.
 
-### Note on top-level run
+### Important stuff first
 
-If run from the top level of a theme, this should find and format all of the following:
+### Don't sort this stuff
 
-- theme.json
-- styles/\*.json
-- \*_/_.block.json
-
-Do not search in node_modules/ or vendor/
+Because some enumerable collections like `color.palette`, `fontSizes` and `SpacingSizes` are directly exposed to content authors, the children of those properties will not be re-ordered, but the component properties of their children will be normalized.
 
 ### Overrides
 
@@ -61,13 +58,15 @@ Example:
 
 ```json
 [
-  "settings.layout",         // Force "layout" to top of "settings"
-  "!settings.advanced",      // Force "advanced" to bottom of "settings"
-  "settings.color.custom",   // Force "custom" to top of "color"
-  "!settings.color.presets"  // Force "presets" to bottom of "color"
+  "settings.layout", // Force "layout" to top of "settings"
+  "!settings.advanced", // Force "advanced" to bottom of "settings"
+  "settings.color.custom", // Force "custom" to top of "color"
+  "!settings.color.presets" // Force "presets" to bottom of "color"
 ]
 ```
+
 ##### Before (schema ordered)
+
 ```json
 {
   "settings": {
@@ -82,19 +81,52 @@ Example:
 ```
 
 ##### After (with overrides applied)
+
 ```json
 {
   "settings": {
-    "layout": {},               // Moved to top
+    "layout": {}, // Moved to top
     "color": {
-      "custom": true,           // Moved to top
-      "presets": []             // Moved to bottom
+      "custom": true, // Moved to top
+      "presets": [] // Moved to bottom
     },
-    "advanced": {}              // Moved to bottom
+    "advanced": {} // Moved to bottom
   }
 }
 ```
 
+### Expansions
+
+Using the same path notation as Overrides, nodes can be marked to expand or collapse. Collapsing nodes follows these rules:
+
+- Path points to object => Collapse object
+- Path points to an array with more than 1 item => Collapse children on their own lines
+- Path points to array with one item => Collapse array one line
+
+#### Default Expansions
+
+```json
+[
+  "settings.layout",
+  "!settings.typography.fontSizes",
+  "!settings.color.duotone",
+  "!settings.color.palette"
+]
+```
+
+### Schema handling
+
+The [published WordPress schemas](https://github.com/WordPress/gutenberg/tree/trunk/schemas) are the source of truth, their published property order is used as the baseline for re-ordering a file's properties.
+
+Files should include a $schema property. This tool will attempt to use the linked schema, and will fall back to a local copy which are synced from the WordPress source repo whenever this package is updated. These three schema are bundled:
+
+- https://schemas.wp.org/trunk/theme.json
+- https://schemas.wp.org/trunk/block.json
+- https://schemas.wp.org/trunk/font-collection.json
+
+Files matching known patterns for theme.json or block.json will
+
+If the CLI is run without arguments in a WordPress theme, any files named theme.json or block.json will
 
 ### CLI Interface
 
@@ -134,23 +166,14 @@ Note: would --no-overrides be the same as --overrides=[] (empty array of overrid
 
 ### Dry-run
 
-To see what sort-wp-json would do, use the `--dry-run` flag (or `-n`). For colors, pipe through [**jq**](https://jqlang.org)
-
-## Running in Development
-
-Until this is proven and released, it must be run directly from this repository. In the terminal, type this, then drag in the files or directory containing files to be sorted:
-
-```
-$ node cli.js <file>
-```
+To see what sort-wp-json would do, use the `--dry-run` flag (or `-n`). For colors, pipe through [**jq**](https://jqlang.org), though this will scrub some of the formatting.
 
 ## License
 
 MIT
 
+---
 
-
---- 
 ## Cruft, leftovers and notes not yet deleted
 
 ### Overrides
@@ -179,11 +202,20 @@ Grouping color palette, gradient and duotone options together. Instead of `custo
 }
 ```
 
-
-
 ---
 
-## Notes
+## Notes and References
+
+WordPress json schema overview and explanations:
+
+https://developer.wordpress.org/news/2024/07/json-schema-in-wordpress/
+
+WordPress schema source sub-repo (in Gutenberg)
+https://github.com/WordPress/gutenberg/tree/trunk/schemas
+
+This uses the [**json-schema-ref-parser**](https://www.npmjs.com/package/@apidevtools/json-schema-ref-parser) for de-reffing JSON schema's so we can loop over their properties more easily.
+
+## More Notes
 
 The theme.json schema is updated fairly regularly. This project should have some automated way of ingesting and updating the schema.
 
@@ -215,7 +247,7 @@ Let's only sort JSON files with an explicit `$schema` key pointing to a valid sc
 
 - [ ] Property collection overrides are isolated in separate files with the intention that future updates will allow for individual customization.
 
-- [x] Anything with a CSS parallel should follow CSS conventions. Eg. Any object describing a box will be re-ordered to match css: Top, Right, Bottom, Left. 
+- [x] Anything with a CSS parallel should follow CSS conventions. Eg. Any object describing a box will be re-ordered to match css: Top, Right, Bottom, Left.
 - [ ] [Border-radius](https://developer.mozilla.org/en-US/docs/Web/CSS/border-radius) should be re-ordered to:
       top-left, top-right, bottom-right, bottom-left.
 
@@ -226,4 +258,3 @@ Let's only sort JSON files with an explicit `$schema` key pointing to a valid sc
 - [ ] Bundled schema files should be listed in a JSON file which is used for local fallbacks and for refreshing locally bundled schemas. Key the file by the URL.
 
 - [ ] Should be able to run on a directory, and sort all JSON files which contain a $schema. Or, look for WordPress-specific JSON files only?
-
