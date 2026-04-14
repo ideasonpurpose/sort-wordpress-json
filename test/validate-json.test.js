@@ -52,4 +52,18 @@ describe("Validate JSON", async () => {
       "Something went wrong, input and output files are not equivalent",
     );
   });
+
+  test("Check deep equality with nested objects", async () => {
+    const original = { a: { b: 1, c: 2 }, d: 3 };
+    const sorted = { d: 3, a: { c: 2, b: 1 } };
+    expect(validateJson(original, sorted)).toBe(true);
+  });
+
+  test("Check deep inequality with nested objects", async () => {
+    const original = { a: { b: 1, c: 2 }, d: 3 };
+    const sorted = { d: 3, a: { c: 2, b: 2 } }; // Different value in nested object
+    expect(() => validateJson(original, sorted)).toThrow(
+      "Something went wrong, input and output files are not equivalent",
+    );
+  });
 });
