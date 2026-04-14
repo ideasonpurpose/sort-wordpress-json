@@ -1,0 +1,40 @@
+# Development files
+test/
+tmp/
+coverage/
+.vscode/
+*.log
+npm-debug.log*
+
+# Source control
+.git/
+.gitignore
+.github/
+
+# Build and cache
+node_modules/
+*.tgz
+*.tar.gz
+
+# IDE and editor files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Documentation and misc
+README.md
+CHANGELOG.md
+CONTRIBUTING.md
+LICENSE
+*.md
+
+# Config files not needed in package
+vitest.config.js
+.eslintrc*
+.prettierrc*
+babel.config.*
+
+# Bin scripts for development
+bin/refresh-schemas.js
