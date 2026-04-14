@@ -13,7 +13,7 @@ describe("Sorted JSON equals original JSON", async () => {
     const expected = JSON.parse(
       await readFile(`./test/fixtures/sort/${jsonFile}`)
     );
-    const schema = await getSchema(expected);
+    const schema = await getSchema(expected, 'theme.json');
 
     const actual = await schemaSort(expected, schema);
     expect(actual).toEqual(expected);

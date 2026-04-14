@@ -7,7 +7,7 @@ import { getSchema } from "../lib/get-schema.js";
 import { resolveProps, flattenProps } from "../lib/resolve-props.js";
 
 describe("resolveProps", async () => {
-  const schema = await getSchema();
+  const schema = await getSchema({}, 'fake/theme.json' );
   await $RefParser.dereference(schema);
 
   test("flattenProps allOf", async () => {
@@ -104,6 +104,7 @@ describe("resolveProps", async () => {
    * both should be merged.
    */
   test("Settings properties", async () => {
+
     const actual = resolveProps(schema.properties);
 
     expect(actual).toHaveProperty("settings");
