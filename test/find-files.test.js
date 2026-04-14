@@ -2,9 +2,7 @@ import { describe, expect, test, vi } from "vitest";
 import { findThemeFiles } from "../lib/find-files.js";
 
 // Mock fast-glob
-vi.mock("fast-glob", () => ({
-  default: vi.fn(),
-}));
+vi.mock("fast-glob", () => ({ default: vi.fn() }));
 
 describe("findThemeFiles", () => {
   test("returns empty array when no files found", async () => {

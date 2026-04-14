@@ -1,31 +1,12 @@
 import { expect, test, describe, vi, beforeEach } from "vitest";
 import { coerceIndent, writeOutput, main } from "../cli.js";
 
-// Mock fs/promises
 vi.mock("fs/promises", () => ({ writeFile: vi.fn() }));
+vi.mock("fast-glob", () => ({ default: vi.fn() }));
 
-// // Mock detectIndent
-// vi.mock("detect-indent", () => ({
-//   default: vi.fn(),
-// }));
-
-// // Mock the lib functions
-// vi.mock("../lib/get-schema.js", () => ({
-//   getSchema: vi.fn(),
-// }));
-
-// vi.mock("../lib/schema-sort.js", () => ({
-//   schemaSort: vi.fn(),
-// }));
-
-// vi.mock("../lib/format-wp-json.js", () => ({
-//   formatWPJson: vi.fn(),
-// }));
-
-// import detectIndent from "detect-indent";
-// import { getSchema } from "../lib/get-schema.js";
-// import { schemaSort } from "../lib/schema-sort.js";
-// import { formatWPJson } from "../lib/format-wp-json.js";
+// Mock lib functions
+vi.mock("../lib/find-files.js");
+vi.mock("../lib/process-file.js");
 
 describe("coerceInput helper", () => {
   test("returns correct object for 'tabs'", () => {
@@ -101,5 +82,80 @@ describe("writeOutput", async () => {
 
     expect(writeFile).toHaveBeenCalledWith(fakePath, fakeContent);
     expect(consoleLogSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe("main", async () => {
+  const consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+  const consoleErrSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+  const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+  const fg = vi.mocked(await import("fast-glob")).default;
+  const { findThemeFiles } = vi.mocked(await import("../lib/find-files.js"));
+  const { processFile } = vi.mocked(await import("../lib/process-file.js"));
+  const { writeFile } = vi.mocked(await import("fs/promises"));
+
+  const fakeIndent = { amount: 2, indent: "  ", type: "space" };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("with argFile, files found, success", async () => {
+    const argv = {
+      file: "pattern",
+      indent: fakeIndent,
+      dryRun: false,
+      overrides: [],
+      expansions: [],
+      noDefaultOverrides: false,
+    };
+    fg.mockResolvedValue([
+      "file1.json",
+      "file2-skipped.json",
+      "file3-error.json",
+    ]);
+    processFile.mockResolvedValueOnce({
+      file: "file1.json",
+      status: "success",
+      content: "content1",
+      fullPath: "/path/file1.json",
+    });
+    processFile.mockResolvedValueOnce({
+      file: "file2-skipped.json",
+      status: "skipped",
+    });
+    processFile.mockResolvedValueOnce({
+      file: "file3-error.json",
+      status: "error",
+      error: new Error("test error"),
+    });
+
+    await main(argv);
+
+    expect(fg).toHaveBeenCalledWith("pattern");
+    expect(consoleErrSpy).toHaveBeenCalledTimes(2);
+    expect(writeFile).toHaveBeenCalledTimes(1);
+  });
+
+  test("no files matched file arg", async () => {
+    fg.mockResolvedValue([]);
+    await main({ file: "nope" });
+    expect(consoleErrSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test("no file arg, no theme.json found", async () => {
+    findThemeFiles.mockResolvedValue(["file.json"]);
+    await main({});
+    expect(consoleErrSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test("no file arg, theme.json found", async () => {
+    findThemeFiles.mockResolvedValue(["theme.json"]);
+    processFile.mockResolvedValue({ file: "theme.json", status: "success" });
+
+    await main({});
+    expect(consoleLogSpy).toHaveBeenCalled();
+    expect(writeFile).toHaveBeenCalledTimes(1);
   });
 });

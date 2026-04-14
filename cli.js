@@ -68,9 +68,10 @@ export async function main(argv) {
       console.log(chalk.green(`Successfully processed ${relPath}`));
     } else if (result.status === "skipped") {
       console.warn(chalk.yellow(`Skipped ${relPath}: ${result.reason}`));
-    } else if (result.status === "error") {
+      // } else if (result.status === "error") {
+    } else {
       console.error(chalk.red(`Error processing ${relPath}: ${result.reason}`));
-      console.error(chalk.red(result.error.stack));
+      console.error(chalk.red(result?.error?.stack));
     }
   });
 }
