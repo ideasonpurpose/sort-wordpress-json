@@ -1,6 +1,6 @@
 {
   "name": "@ideasonpurpose/sort-wordpress-json",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Sorts WordPress JSON files. Because things should be where things should be.",
   "keywords": [
     "wordpress",

@@ -1,6 +1,6 @@
 # Sort WordPress JSON
 
-#### Version 0.0.4
+#### Version 0.0.5
 
 > "Things should be where things should be."
 
