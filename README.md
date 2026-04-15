@@ -15,7 +15,7 @@ As JSON has become central to WordPress development, our files often become a me
 This is a pre-release work in progress. Use at your own risk. Install direct from GitHub:
 
 ```sh
-npm install github:ideasonpurpose/sort-wordpress-json
+npm install -g github:ideasonpurpose/sort-wordpress-json
 ```
 
 ## Sorting theme files
@@ -229,32 +229,33 @@ Let's only sort JSON files with an explicit `$schema` key pointing to a valid sc
 
 ## TODO:
 
-- [ ] Override sort order, settings.layout should appear first
+- [x] Override sort order, settings.layout should appear first
 
 - [ ] Fallback schema should be included with the package, download the latest on build. This should work offline.
 
-- [ ] Non-schema items pass through unsorted? Or option to sort alphabetically?
+- [x] Non-schema items pass through unsorted? ~~Or option to sort alphabetically?~~
 
 - [ ] Override sorts only specified properties on non-schema entries?
 
-- [ ] If you're insane, you can set indent to 0, which will remove all formatting and output a condensed, stringified JSON file.
+- [x] If you're insane, you can set indent to 0, which will remove all formatting and output a condensed, stringified JSON file.
 
 - [ ] ~~Due to slow retrieval and infrequent source changes, maybe the source schema are just baked into each release as part of the build? If we _really_ needed to, there could be a flag for always loading remote schemas from the file instead of the cache.~~ **_-- Shelving this for now, it's an optimization._**
 
-- [ ] Add tests for composer.json
+- [ ] ~~Add tests for composer.json~~ (what?)
 
 - [ ] Break out the schema-sort into a separate package/library.
 
 - [ ] Property collection overrides are isolated in separate files with the intention that future updates will allow for individual customization.
 
 - [x] Anything with a CSS parallel should follow CSS conventions. Eg. Any object describing a box will be re-ordered to match css: Top, Right, Bottom, Left.
+
 - [ ] [Border-radius](https://developer.mozilla.org/en-US/docs/Web/CSS/border-radius) should be re-ordered to:
       top-left, top-right, bottom-right, bottom-left.
 
-- [ ] Indentation should be inherited from the source file and used as the basis for reformatting with Prettier. Indentation can also be overridden with a command-line flag.
+- [x] Indentation should be inherited from the source file and used as the basis for reformatting with Prettier. Indentation can also be overridden with a command-line flag.
 
 - [ ] Cache remote schema files?
 
 - [ ] Bundled schema files should be listed in a JSON file which is used for local fallbacks and for refreshing locally bundled schemas. Key the file by the URL.
 
-- [ ] Should be able to run on a directory, and sort all JSON files which contain a $schema. Or, look for WordPress-specific JSON files only?
+- [x] Should be able to run on a directory, and sort all JSON files which contain a $schema. Or, look for WordPress-specific JSON files only?
