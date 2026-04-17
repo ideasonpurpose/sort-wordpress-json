@@ -120,6 +120,7 @@ describe("main", async () => {
       status: "success",
       content: "content1",
       fullPath: "/path/file1.json",
+      duration: 1234
     });
     processFile.mockResolvedValueOnce({
       file: "file2-skipped.json",

@@ -14,8 +14,12 @@ import { processFile } from "./lib/process-file.js";
 import { resolve } from "path";
 
 import { writeFile } from "fs/promises";
+import { realpathSync } from "fs";
+import { fileURLToPath } from "url";
+
 import fg from "fast-glob";
 import chalk from "chalk";
+import prettyMilliseconds from "pretty-ms";
 
 export async function writeOutput(fullPath, formatted, dryRun) {
   if (dryRun) {
@@ -32,6 +36,7 @@ export async function writeOutput(fullPath, formatted, dryRun) {
  * @param {import('./types.d.ts').CliArgs} argv
  */
 export async function main(argv) {
+  const startTime = process.hrtime.bigint();
   const {
     file: argFile,
     indent: argIndent,
@@ -65,15 +70,32 @@ export async function main(argv) {
     const relPath = result.file.replace(process.cwd(), "").replace(/^\/*/, "");
     if (result.status === "success") {
       writeOutput(result.fullPath, result.content, dryRun);
-      console.log(chalk.green(`Successfully processed ${relPath}`));
+      // console.log(result.duration);
+      console.log(
+        chalk.green("✔"),
+        relPath,
+        chalk.blue(prettyMilliseconds(result.duration)),
+      );
     } else if (result.status === "skipped") {
-      console.warn(chalk.yellow(`Skipped ${relPath}: ${result.reason}`));
-      // } else if (result.status === "error") {
+      console.warn(
+        chalk.yellow("⚠"),
+        // chalk.yellow("↷"),
+        relPath,
+        chalk.yellow(`Skipped: ${result.reason}`),
+      );
     } else {
-      console.error(chalk.red(`Error processing ${relPath}: ${result.reason}`));
+      console.error(
+        chalk.red("✖"),
+        relPath,
+        chalk.red(`Error: ${result.reason}`),
+      );
       console.error(chalk.red(result?.error?.stack));
     }
   });
+  const endTime = Number(process.hrtime.bigint() - startTime) / 1_000_000; // Convert nanoseconds to milliseconds
+  console.log(
+    `Total processing time ${chalk.blue(prettyMilliseconds(endTime))}`,
+  );
 }
 
 /**
@@ -97,13 +119,14 @@ export function coerceIndent(n) {
 }
 
 /* v8 ignore start */
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (fileURLToPath(import.meta.url) === realpathSync(process.argv[1])) {
   yargs(hideBin(process.argv))
     .command(
       "$0 [file]",
       "Sort WordPress JSON files",
       (yargs) => {
         yargs
+          .pkgConf("sort-wp-json")
           .positional("file", {
             type: "string",
             normalize: true,
@@ -128,7 +151,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
               "A list of override keys like 'settings.color.custom' to force to the top. Force nodes to the bottom by prefixing their paths with an exclamation point like '!settings.color.duotone'",
             default: [],
           })
-
           .option("no-overrides", {
             type: "boolean",
             describe:
@@ -141,7 +163,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
               "A list of expansion keys like 'settings.typography.fontSizes'. Collapse nodes by prefixing with an exclamation point like '!settings.color.palette'",
             default: [],
           })
-
           .option("dry-run", {
             alias: "n",
             type: "boolean",
