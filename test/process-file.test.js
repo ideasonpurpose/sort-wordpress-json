@@ -24,14 +24,6 @@ describe("processFile", async () => {
     vi.clearAllMocks();
   });
 
-  test("skipped when no schema", async () => {
-    readFile.mockResolvedValue(JSON.stringify(inputJson));
-
-    const actual = await processFile(fakePath);
-
-    expect(actual).toHaveProperty("status", "skipped");
-  });
-
   test("indent provided, detectIndent not called", async () => {
     readFile.mockResolvedValue(JSON.stringify(inputJson));
     getSchema.mockResolvedValue({ schema: true });
@@ -42,10 +34,38 @@ describe("processFile", async () => {
     const actual = await processFile(fakePath, {});
 
     expect(actual).toHaveProperty("status", "success");
+    expect(actual).toHaveProperty("duration");
+    expect(actual.duration).toBeGreaterThan(0);
+  });
+
+  test("skipped when no schema", async () => {
+    readFile.mockResolvedValue(JSON.stringify(inputJson));
+    getSchema.mockResolvedValue(false);
+
+    const actual = await processFile(fakePath);
+
+    expect(actual).toHaveProperty("status", "skipped");
+  });
+
+  test("skip when getSchema errors", async () => {
+    getSchema.mockRejectedValue(new Error("getSchema Error"));
+
+    const actual = await processFile(fakePath);
+    expect(actual).toHaveProperty("status", "skipped");
+    expect(actual).toHaveProperty("reason", "getSchema Error");
   });
 
   test("error on readFile", async () => {
     readFile.mockRejectedValue(new Error());
+
+    const actual = await processFile(fakePath);
+
+    expect(actual).toHaveProperty("file", fakePath);
+    expect(actual).toHaveProperty("status", "error");
+  });
+
+  test("error on invalid JSON", async () => {
+    validateJson.mockRejectedValue("invalid json");
 
     const actual = await processFile(fakePath);
 
