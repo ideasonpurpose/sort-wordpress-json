@@ -95,7 +95,7 @@ describe("main", async () => {
   const { processFile } = vi.mocked(await import("../lib/process-file.js"));
   const { writeFile } = vi.mocked(await import("fs/promises"));
 
-  const fakeIndent = { amount: 2, indent: "  ", type: "space" };
+  const fakeIndent = { amount: 2, indent: "  ", type: "space" as const };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -120,7 +120,7 @@ describe("main", async () => {
       status: "success",
       content: "content1",
       fullPath: "/path/file1.json",
-      duration: 1234
+      duration: 1234,
     });
     processFile.mockResolvedValueOnce({
       file: "file2-skipped.json",
@@ -153,7 +153,13 @@ describe("main", async () => {
 
   test("no file arg, theme.json found", async () => {
     findThemeFiles.mockResolvedValue(["theme.json"]);
-    processFile.mockResolvedValue({ file: "theme.json", status: "success" });
+    processFile.mockResolvedValue({
+      file: "theme.json",
+      status: "success",
+      fullPath: "/path/theme.json",
+      content: "content",
+      duration: 1234,
+    });
 
     await main({});
     expect(consoleLogSpy).toHaveBeenCalled();

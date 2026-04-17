@@ -30,3 +30,24 @@ export type CliArgs = {
   version?: boolean;
   dryRun?: boolean;
 };
+
+export type ProcessResult =
+  | {
+      file: string;
+      status: "success";
+      content: string;
+      fullPath: string;
+      duration: number;
+    }
+  | {
+      file: string;
+      status: "skipped";
+      reason?: string;
+      error?: any;
+    }
+  | {
+      file: string;
+      status: "error";
+      reason?: string;
+      error: any;
+    };
