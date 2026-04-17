@@ -4,15 +4,25 @@
 
 > "Things should be where things should be."
 
-Enforcing property order makes development and debugging faster because we know where properties should be. This project was largely inspired by [sort-package-json](https://github.com/keithamus/sort-package-json), but takes a different approach: Both deep-sorting WordPress JSON files according to their schemas and formatting for consistency and easier reading.
+Enforcing property order makes development and debugging faster because we know where properties should be. This project was largely inspired by [sort-package-json](https://github.com/keithamus/sort-package-json), but takes a different approach: WordPress JSON files are deep-sorted according to their schemas, then formatted for consistency and easier reading.
 
 ### Why?
 
-As JSON has become central to WordPress development, our files often become a mess of organic, as-needed additions. Without an enforced order, editing **theme.json** files gets slower and comparing them across projects becomes nearly impossible, wasting time and frustrating developers.
+As JSON has become central to WordPress development, our files often become a mess of organic, ad-hoc additions. Without an enforced order, editing **theme.json** files gets slower and comparing them across projects becomes nearly impossible, wasting time and frustrating developers.
 
 ## Installation
 
-This is a pre-release work in progress. Use at your own risk. Install direct from GitHub:
+This is a pre-release work in progress. It's functional and mostly feature complete, but _use at your own risk_.
+
+To install, clone locally then install globally.
+
+```sh
+git clone https://github.com/ideasonpurpose/sort-wordpress-json.git
+cd sort-wordpress-json
+npm install -g .
+```
+
+Or install direct from GitHub: _(once public)_
 
 ```sh
 npm install -g github:ideasonpurpose/sort-wordpress-json
@@ -36,7 +46,7 @@ All found files named **theme.json** and **block.json** will be sorted and forma
 
 ### Safety Checks
 
-Before writing a file, the tool checks the resulting JSON for deep-equality with the original source JSON. This ensures the only changes were cosmetic and the data is the identical.
+`sort-wp-json` always checks processed data for deep-equality with the original source JSON. This ensures data integrity and that all changes were cosmetic and the processed files are functionally identical.
 
 ## Overrides and Expansions
 
@@ -167,6 +177,22 @@ Note: would --no-overrides be the same as --overrides=[] (empty array of overrid
 ### Dry-run
 
 To see what sort-wp-json would do, use the `--dry-run` flag (or `-n`). For colors, pipe through [**jq**](https://jqlang.org), though this will scrub some of the formatting.
+
+## API
+
+While primarily intended as a CLI tool. All funcitonality is available as an imported module.
+
+### Install
+
+```sh
+npm install @ideasonpurpose/sort-wordpress-json
+```
+
+Import
+
+```js
+import { sort } from "@ideasonpurpose/sort-wordpress-json";
+```
 
 ## License
 
