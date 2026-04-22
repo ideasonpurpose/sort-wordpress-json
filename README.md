@@ -128,15 +128,14 @@ Using the same path notation as Overrides, nodes can be marked to expand or coll
 
 The [published WordPress schemas](https://github.com/WordPress/gutenberg/tree/trunk/schemas) are the source of truth, their published property order is used as the baseline for re-ordering a file's properties.
 
-Files should include a $schema property. This tool will attempt to use the linked schema, and will fall back to a local copy which are synced from the WordPress source repo whenever this package is updated. These three schema are bundled:
+Files should include a $schema property. **sort-wp-json** will cache known schemas from the WordPress/Gutenberg source repo whenever the package is installed or updated. The following schema will be pre-cached:
 
 - https://schemas.wp.org/trunk/theme.json
 - https://schemas.wp.org/trunk/block.json
 - https://schemas.wp.org/trunk/font-collection.json
+- https://schemas.wp.org/trunk/wp-env.json
 
-Files matching known patterns for theme.json or block.json will
-
-If the CLI is run without arguments in a WordPress theme, any files named theme.json or block.json will
+Schemas are cached for 14 days. The cache can be manually refreshed by calling `sort-wp-json --refresh-cache`.
 
 ### CLI Interface
 

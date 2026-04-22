@@ -1,13 +1,20 @@
 import { describe, expect, test, vi, beforeEach } from "vitest";
 import * as getSchemaModule from "../lib/get-schema.js";
+import { cacheGet, cacheSet } from "../lib/cache.js";
 
-const { getSchema, getLocalSchemaPath } = getSchemaModule;
+const { getSchema } = getSchemaModule;
 
 // Mock the entire module
 vi.mock("@apidevtools/json-schema-ref-parser", () => ({
   default: {
     bundle: vi.fn(),
   },
+}));
+
+// Mock the cache module
+vi.mock("../lib/cache.js", () => ({
+  cacheGet: vi.fn(),
+  cacheSet: vi.fn(),
 }));
 
 describe("getSchema Tests", async () => {
@@ -19,85 +26,55 @@ describe("getSchema Tests", async () => {
     .default;
 
   const bundleMock = $RefParser.bundle;
-  const getLocalSchemaPathMock = vi.fn();
 
   const fakeSrc = "https://example.com/fake_schema.json";
-  const fakeLocal = "../local_schema/fake_schema.json";
 
   beforeEach(() => {
-    bundleMock.mockReset(); // Or mockClear() if you prefer to keep mock history
+    bundleMock.mockReset();
   });
 
   test("load remote schema", async () => {
+    getCached.mockReturnValue(null);
     bundleMock.mockResolvedValue({ fake: "schema" });
 
-    await getSchema({ $schema: fakeSrc });
+    const actual = await getSchema(fakeSrc);
 
+    expect(getCached).toHaveBeenCalledWith(fakeSrc);
     expect(bundleMock).toHaveBeenCalledTimes(1);
     expect(bundleMock).toHaveBeenCalledWith(fakeSrc);
+    expect(setCached).toHaveBeenCalledWith(fakeSrc, { fake: "schema" });
+    expect(actual).toEqual({ fake: "schema" });
   });
 
-  test("remote fails, no fallback", async () => {
-    bundleMock.mockThrowOnce(new Error("mock rejection 1"));
+  test("load from cache", async () => {
+    getCached.mockReturnValue({ cached: "schema" });
 
-    const actual = await getSchema({ $schema: fakeSrc });
+    const actual = await getSchema(fakeSrc);
 
+    expect(getCached).toHaveBeenCalledWith(fakeSrc);
+    expect(bundleMock).toHaveBeenCalledTimes(0);
+    expect(actual).toEqual({ cached: "schema" });
+  });
+
+  test("remote fails", async () => {
+    getCached.mockReturnValue(null);
+    bundleMock.mockRejectedValue(new Error("mock rejection"));
+
+    const actual = await getSchema(fakeSrc);
+
+    expect(getCached).toHaveBeenCalledWith(fakeSrc);
     expect(bundleMock).toHaveBeenCalledTimes(1);
     expect(bundleMock).toHaveBeenCalledWith(fakeSrc);
-
     expect(actual).toEqual(false);
   });
 
-  test("remote fails, use fallback", async () => {
-    bundleMock.mockThrowOnce(new Error("mock rejection"));
-    getLocalSchemaPathMock.mockReturnValue(fakeLocal);
-    await getSchema({ $schema: fakeSrc }, fakeLocal, getLocalSchemaPathMock);
+  test("no schema url", async () => {
+    const actual = await getSchema(null);
 
-    expect(bundleMock).toHaveBeenCalledTimes(2);
-    expect(bundleMock).toHaveBeenCalledWith(fakeSrc);
-    expect(bundleMock).toHaveBeenCalledWith(fakeLocal);
-    expect(getLocalSchemaPathMock).toHaveBeenCalledWith(fakeLocal);
-  });
-
-  test("remote fails, no fallback ", async () => {
-    bundleMock.mockThrowOnce(new Error("mock rejection"));
-    getLocalSchemaPathMock.mockReturnValue(null);
-
-    const actual = await getSchema(
-      { $schema: fakeSrc },
-      fakeLocal,
-      getLocalSchemaPathMock,
-    );
-
-    expect(bundleMock).toHaveBeenCalledTimes(1);
-    expect(bundleMock).toHaveBeenCalledWith(fakeSrc);
-    expect(getLocalSchemaPathMock).toHaveBeenCalledWith(fakeLocal);
-
-    expect(actual).toEqual(false);
-  });
-
-  test("remote fails, fallback fails ", async () => {
-    bundleMock.mockThrowOnce(new Error("mock rejection 1"));
-    bundleMock.mockThrowOnce(new Error("mock rejection 2"));
-    getLocalSchemaPathMock.mockReturnValue("fake/path");
-
-    const actual = await getSchema(
-      { $schema: fakeSrc },
-      fakeLocal,
-      getLocalSchemaPathMock,
-    );
-
-    expect(bundleMock).toHaveBeenCalledTimes(2);
-    expect(bundleMock).toHaveBeenCalledWith(fakeSrc);
-    expect(getLocalSchemaPathMock).toHaveBeenCalledWith(fakeLocal);
-
+    expect(bundleMock).toHaveBeenCalledTimes(0);
     expect(actual).toEqual(false);
   });
 });
-
-describe("getLocalSchema helper", async () => {
-  test("get local schema for theme.json", async () => {
-    const localSchemaPath = getLocalSchemaPath("somefile/theme.json");
     expect(localSchemaPath).toBeTruthy();
     expect(localSchemaPath).toMatch(/theme\.json$/);
   });

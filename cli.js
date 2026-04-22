@@ -8,8 +8,18 @@ import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import packageJson from "./package.json" with { type: "json" };
 
+import { formatDistanceToNow, addSeconds } from "date-fns";
+
 import { findThemeFiles } from "./lib/find-files.js";
 import { processFile } from "./lib/process-file.js";
+import {
+  cacheGet,
+  cacheSet,
+  cacheSchemas,
+  cacheList,
+  cacheClear,
+} from "./lib/cache.js";
+import { schemaUrls } from "./lib/schemas.js";
 
 import { resolve } from "path";
 
@@ -19,7 +29,10 @@ import { fileURLToPath } from "url";
 
 import fg from "fast-glob";
 import chalk from "chalk";
+import ora from "ora";
+
 import prettyMilliseconds from "pretty-ms";
+// import { argv } from "process";
 
 export async function writeOutput(fullPath, formatted, dryRun) {
   if (dryRun) {
@@ -69,8 +82,7 @@ export async function main(argv) {
   (await Promise.all(updatedFiles)).forEach((result) => {
     const relPath = result.file.replace(process.cwd(), "").replace(/^\/*/, "");
     if (result.status === "success") {
-      writeOutput(result.fullPath, result.content, dryRun);
-      // console.log(result.duration);
+      writeOutput(result.fullPath, result.content, dryRun); // adds about 1ms to the total time
       console.log(
         chalk.green("✔"),
         relPath,
@@ -93,8 +105,9 @@ export async function main(argv) {
     }
   });
   const endTime = Number(process.hrtime.bigint() - startTime) / 1_000_000; // Convert nanoseconds to milliseconds
+  const itemLabel = filesToProcess.length === 1 ? "file" : "files";
   console.log(
-    `Total processing time ${chalk.blue(prettyMilliseconds(endTime))}`,
+    `sort-wp-json processed ${chalk.cyan(filesToProcess.length)} ${itemLabel} in ${chalk.cyan(prettyMilliseconds(endTime))}.`,
   );
 }
 
@@ -163,6 +176,22 @@ if (fileURLToPath(import.meta.url) === realpathSync(process.argv[1])) {
               "A list of expansion keys like 'settings.typography.fontSizes'. Collapse nodes by prefixing with an exclamation point like '!settings.color.palette'",
             default: [],
           })
+          // .option("cache-clear", {
+          //   type: "boolean",
+          //   describe: "Clear the schema cache",
+          //   default: false,
+          // })
+          // .option("cache-reset", {
+          //   type: "boolean",
+          //   describe:
+          //     "Reset the schema cache (Clear and download fresh copies)",
+          //   default: false,
+          // })
+          // .option("cache-list", {
+          //   type: "boolean",
+          //   describe: "List the cached schema files",
+          //   default: false,
+          // })
           .option("dry-run", {
             alias: "n",
             type: "boolean",
@@ -172,6 +201,82 @@ if (fileURLToPath(import.meta.url) === realpathSync(process.argv[1])) {
       },
       async (argv) => {
         return await main(/** @type {import('./types.d.ts').CliArgs} */ (argv));
+      },
+    )
+    .command(
+      "cache <subcommand>",
+      "Manage the schema cache: clear, refresh, or list cached files.",
+      (yargs) => {
+        yargs
+          .command(
+            "clear",
+            "Clear the cached schema files",
+            {},
+            async (argv) => {
+              cacheClear();
+              console.log("Schema cache cleared.");
+            },
+          )
+          .command(
+            "refresh",
+            "Refresh and rebuild the schema cache",
+            {},
+            async (argv) => {
+              console.log("Refreshing schema cache...");
+              const startTotalTime = process.hrtime.bigint();
+
+              for (const schema of schemaUrls) {
+                const startTime = process.hrtime.bigint();
+                const spinner = ora(schema).start();
+
+                await cacheSchemas(schema);
+                const endTime =
+                  Number(process.hrtime.bigint() - startTime) / 1_000_000; // Convert nanoseconds to milliseconds
+
+                spinner.succeed(
+                  schema + " " + chalk.blue(prettyMilliseconds(endTime)),
+                );
+              }
+              const endTotalTime =
+                Number(process.hrtime.bigint() - startTotalTime) / 1_000_000; // Convert nanoseconds to milliseconds
+              console.log(
+                "Schema cache refreshed in " +
+                  chalk.blue(prettyMilliseconds(endTotalTime)) +
+                  ".",
+              );
+            },
+          )
+          .command("list", "List the cached schema files", {}, (argv) => {
+            const info = cacheList();
+            const items = info.items
+              .sort((a, b) => {
+                if (!!a.expires != !!b.expires) {
+                  return a.expires ? -1 : 1;
+                }
+                return a.expires
+                  ? a.expires - b.expires
+                  : a.key.localeCompare(b.key);
+              })
+              .map(
+                (item) =>
+                  item.key +
+                  " " +
+                  (item.expires
+                    ? chalk.blue(formatDistanceToNow(new Date(item.expires)))
+                    : ""),
+              );
+            console.log("Schema Key", chalk.blue("expiration"));
+            console.log(items.join("\n"));
+            const itemLabel = info.count === 1 ? "file" : "files";
+            console.log(
+              `Schema Cache contains ${chalk.cyan(info.count)} ${itemLabel}.`,
+            );
+            console.log(`Cache directory: ${chalk.green(info.dir)}`);
+          })
+          .demandCommand(
+            1,
+            "You must specify a subcommand: clear, refresh, or list",
+          );
       },
     )
     .demandCommand(0)

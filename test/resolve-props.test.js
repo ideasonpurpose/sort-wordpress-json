@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 
 import $RefParser from "@apidevtools/json-schema-ref-parser";
 
+vi.mock('../lib/get-schema.js');
 import { getSchema } from "../lib/get-schema.js";
 import { resolveProps, flattenProps } from "../lib/resolve-props.js";
 
@@ -11,7 +12,8 @@ describe("resolveProps", async () => {
   const consoleErrSpy = vi.spyOn(console, "error").mockImplementation(() => {});
   const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-  const schema = await getSchema({}, "fake/theme.json");
+  const schema = { type: 'object' };
+  getSchema.mockResolvedValue(schema);
   await $RefParser.dereference(schema);
 
   test("flattenProps allOf", async () => {

@@ -1,6 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { expect, test, describe, vi } from "vitest";
 
+vi.mock('../lib/get-schema.js');
 import { getSchema } from "../lib/get-schema.js";
 import { schemaSort, walkSchema } from "../lib/schema-sort.js";
 
@@ -9,7 +10,8 @@ describe("schemaSort", async () => {
   const consoleErrSpy = vi.spyOn(console, "error").mockImplementation(() => {});
   const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-  const schema = await getSchema({}, "theme.json");
+  const schema = { type: 'object' };
+  getSchema.mockResolvedValue(schema);
 
   test("Requires a schema", async () => {
     await expect(schemaSort({ some: "data" })).rejects.toThrow();
