@@ -15,15 +15,16 @@ import { processFile } from "./lib/process-file.js";
 import {
   cacheGet,
   cacheSet,
-  cacheSchemas,
+  cacheKeyExists,
   cacheList,
   cacheClear,
 } from "./lib/cache.js";
-import { schemaUrls } from "./lib/schemas.js";
+import { cacheSchemas } from "./lib/cache-schemas.js";
+import { schemaUrls, schemaMap } from "./lib/schemas.js";
 
-import { resolve } from "path";
+import { resolve, basename } from "path";
 
-import { writeFile } from "fs/promises";
+import { readFile, writeFile } from "fs/promises";
 import { realpathSync } from "fs";
 import { fileURLToPath } from "url";
 
@@ -75,35 +76,81 @@ export async function main(argv) {
     console.log(`Found ${filesToProcess.length} files to process:`);
   }
 
-  const updatedFiles = filesToProcess
-    .map((file) => resolve(file))
-    .map((filepath) => processFile(filepath, argIndent));
+  const missingCacheKeys = new Set();
+  const updatedFiles = [];
 
-  (await Promise.all(updatedFiles)).forEach((result) => {
-    const relPath = result.file.replace(process.cwd(), "").replace(/^\/*/, "");
+  for (const file of filesToProcess) {
+    const filepath = resolve(file);
+    try {
+      const startTime = process.hrtime.bigint();
+      const rawFile = (await readFile(filepath, "utf8")).toString();
+      const originalJson = JSON.parse(rawFile);
+      const schemaUrl = originalJson["$schema"];
+      if (!missingCacheKeys.has(schemaUrl) && !cacheKeyExists(schemaUrl)) {
+        const spinner = ora({
+          text: chalk.gray(`Caching ${chalk.bold(schemaUrl)}...`),
+          color: "gray",
+          spinner: "growVertical",
+        }).start();
+
+        missingCacheKeys.add(schemaUrl);
+        await cacheSchemas(schemaUrl);
+
+        const endTime = Number(process.hrtime.bigint() - startTime) / 1_000_000; // Convert nanoseconds to milliseconds
+        spinner.stopAndPersist({
+          symbol: chalk.gray("●"),
+          text: chalk.gray(`Cached ${chalk.bold(schemaUrl)}`),
+          suffixText: chalk.blue(prettyMilliseconds(endTime)),
+        });
+      }
+    } catch (e) {
+      // Ignore errors, will be handled in processFile
+    }
+
+    const relPath = filepath.replace(process.cwd(), "").replace(/^\/*/, "");
+    const spinner = ora({
+      text: relPath,
+      spinner: "dots3",
+    }).start();
+
+    const result = await processFile(filepath, argIndent);
     if (result.status === "success") {
-      writeOutput(result.fullPath, result.content, dryRun); // adds about 1ms to the total time
-      console.log(
-        chalk.green("✔"),
-        relPath,
-        chalk.blue(prettyMilliseconds(result.duration)),
+      spinner.succeed(
+        relPath + " " + chalk.blue(prettyMilliseconds(result.duration)),
       );
     } else if (result.status === "skipped") {
-      console.warn(
-        chalk.yellow("⚠"),
-        // chalk.yellow("↷"),
-        relPath,
-        chalk.yellow(`Skipped: ${result.reason}`),
-      );
+      spinner.warn(relPath + " " + chalk.yellow(`Skipped: ${result.reason}`));
     } else {
-      console.error(
-        chalk.red("✖"),
-        relPath,
-        chalk.red(`Error: ${result.reason}`),
-      );
-      console.error(chalk.red(result?.error?.stack));
+      spinner.fail(relPath + " " + chalk.red(`Error: ${result.reason}`));
     }
-  });
+    // updatedFiles.push(processFile(filepath, argIndent));
+  }
+
+  // (await Promise.all(updatedFiles)).forEach((result) => {
+  //   const relPath = result.file.replace(process.cwd(), "").replace(/^\/*/, "");
+  //   if (result.status === "success") {
+  //     writeOutput(result.fullPath, result.content, dryRun); // adds about 1ms to the total time
+  //     console.log(
+  //       chalk.green("✔"),
+  //       relPath,
+  //       chalk.blue(prettyMilliseconds(result.duration)),
+  //     );
+  //   } else if (result.status === "skipped") {
+  //     console.warn(
+  //       chalk.yellow("⚠"),
+  //       // chalk.yellow("↷"),
+  //       relPath,
+  //       chalk.yellow(`Skipped: ${result.reason}`),
+  //     );
+  //   } else {
+  //     console.error(
+  //       chalk.red("✖"),
+  //       relPath,
+  //       chalk.red(`Error: ${result.reason}`),
+  //     );
+  //     console.error(chalk.red(result?.error?.stack));
+  //   }
+  // });
   const endTime = Number(process.hrtime.bigint() - startTime) / 1_000_000; // Convert nanoseconds to milliseconds
   const itemLabel = filesToProcess.length === 1 ? "file" : "files";
   console.log(
@@ -227,15 +274,21 @@ if (fileURLToPath(import.meta.url) === realpathSync(process.argv[1])) {
 
               for (const schema of schemaUrls) {
                 const startTime = process.hrtime.bigint();
-                const spinner = ora(schema).start();
+                const spinner = ora({
+                  text: chalk.gray(`Caching ${chalk.bold(schema)}...`),
+                  color: "gray",
+                  spinner: "growVertical",
+                }).start();
 
                 await cacheSchemas(schema);
                 const endTime =
                   Number(process.hrtime.bigint() - startTime) / 1_000_000; // Convert nanoseconds to milliseconds
 
-                spinner.succeed(
-                  schema + " " + chalk.blue(prettyMilliseconds(endTime)),
-                );
+                spinner.stopAndPersist({
+                  symbol: chalk.gray("●"),
+                  text: chalk.gray(`Cached ${chalk.bold(schema)}`),
+                  suffixText: chalk.blue(prettyMilliseconds(endTime)),
+                });
               }
               const endTotalTime =
                 Number(process.hrtime.bigint() - startTotalTime) / 1_000_000; // Convert nanoseconds to milliseconds
