@@ -20,7 +20,7 @@ import {
   cacheClear,
 } from "./lib/cache.js";
 import { cacheSchemas } from "./lib/cache-schemas.js";
-import { schemaUrls, schemaMap } from "./lib/schemas.js";
+import { coerceIndent } from "./lib/coerce-indent.js";
 
 import { resolve, basename } from "path";
 
