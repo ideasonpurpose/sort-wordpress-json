@@ -11,9 +11,5 @@
     "lib": ["es2025"],
     "types": ["node"]
   },
-  "include": [
-    "cli.js",
-    "types.d.ts",
-    "lib/**/*.js"
-  ]
+  "include": ["cli.js", "types.d.ts", "lib/**/*.js", "defaults/**/*.js"]
 }

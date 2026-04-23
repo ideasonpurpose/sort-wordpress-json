@@ -22,7 +22,10 @@ import {
 import { cacheSchemas } from "./lib/cache-schemas.js";
 import { coerceIndent } from "./lib/coerce-indent.js";
 
-import { resolve, basename } from "path";
+import { schemaUrls } from "./defaults/schemas.js";
+import { overrides as defaultOverrides } from "./defaults/overrides.js";
+import { expansions as defaultExpansions } from "./defaults/expansions.js";
+
 
 import { readFile, writeFile } from "fs/promises";
 import { realpathSync } from "fs";
