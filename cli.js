@@ -224,12 +224,6 @@ if (fileURLToPath(import.meta.url) === realpathSync(process.argv[1])) {
               "A list of expansion keys like 'settings.typography.fontSizes'. Collapse nodes by prefixing with an exclamation point like '!settings.color.palette'",
             default: [],
           })
-          .option("option-check", {
-            alias: "c",
-            type: "boolean",
-            describe: "Log current options and exit. For Debugging.",
-            default: false,
-          })
           .option("dry-run", {
             alias: "n",
             type: "boolean",
@@ -238,11 +232,6 @@ if (fileURLToPath(import.meta.url) === realpathSync(process.argv[1])) {
           });
       },
       async (argv) => {
-        if (argv.optionCheck) {
-          console.log("Current Options:");
-          console.log(argv);
-          return;
-        }
         return await main(/** @type {import('./types.d.ts').CliArgs} */ (argv));
       },
     )
