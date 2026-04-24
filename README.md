@@ -135,39 +135,52 @@ Files should include a $schema property. **sort-wp-json** will cache known schem
 - https://schemas.wp.org/trunk/font-collection.json
 - https://schemas.wp.org/trunk/wp-env.json
 
-Schemas are cached for 14 days. The cache can be manually refreshed by calling `sort-wp-json --refresh-cache`.
+Schemas are cached for 14 days. The cache can be manually refreshed by calling `sort-wp-json cache refresh`.
 
 ### CLI Interface
 
-Sketching here:
+#### Usage
 
-sort-wp-json <file> --no-overrides
-Flags:
+```bash
+sort-wp-json [file]
+```
 
-- `--no-overrides` - Output direct from the schema with no opinionated overrides
-- `--schema` - override a schema (accepts a file path or url)
-- `--verbose`
+Sorts WordPress JSON files in the current directory or specified file/glob pattern.
 
-Note: would --no-overrides be the same as --overrides=[] (empty array of overrides)? Probably best to keep it explicit. IF no-overrides was combined with overrides, then the defaults would first be removed, then the provided overrides would be used. If only a list of overrides was provided, then the list would have the internal overrides applied onto it, so the provided keys would take priority.
+#### Options
 
-> TODO: Overrides should be able to be stored in package.json, similar to how Prettier does:
->
-> In package.json, add a sort-wp-json property, something like this:
+- `-t, --indent <string>`: Set indentation (number of spaces, 'tab', 'tabs', or 'inherit'). Defaults to 'inherit'.
+- `--overrides <array>`: Override sort order with key-paths (prefix with `!` to force to bottom).
+- `--no-overrides`: Disable default overrides.
+- `--expansions <array>`: Control node expansion (prefix with `!` to collapse).
+- `-n, --dry-run`: Preview changes without writing files.
+
+#### Cache Management
+
+```bash
+sort-wp-json cache <subcommand>
+```
+
+Manage schema cache: `clear`, `refresh`, or `list`.
+
+For full details and all options, run `sort-wp-json --help`.
+
+### Configuration
+
+Settings can be customized per-project by adding a `sort-wp-json` property to the project's `package.json` file. Options provided via CLI will override these settings.
 
 ```json
 {
   "name": "sort-wp-json-example",
   "description": "Example showing sort-wp-json overrides in package.json",
   "sort-wp-json": {
+    "indent": 4,
     "overrides": [
       "settings.layout",
-      "settings.useRootPaddingAwareAlignments",
-      "settings.color.custom",
-      "settings.color.defaultPalette",
-      "settings.color.palette",
-      "settings.color.customGradient",
-      "settings.color.defaultGradients",
-      "settings.color.gradients"
+      "settings.color.custom"
+    ],
+    "expansions": [
+      "settings.typography.fontSizes"
     ]
   }
 }
@@ -179,7 +192,7 @@ To see what sort-wp-json would do, use the `--dry-run` flag (or `-n`). For color
 
 ## API
 
-While primarily intended as a CLI tool. All funcitonality is available as an imported module.
+While primarily intended as a CLI tool, all functionality is available as an imported module.
 
 ### Install
 
@@ -187,10 +200,40 @@ While primarily intended as a CLI tool. All funcitonality is available as an imp
 npm install @ideasonpurpose/sort-wordpress-json
 ```
 
-Import
+### Usage
 
 ```js
 import { sort } from "@ideasonpurpose/sort-wordpress-json";
+
+const sortedJson = sort(jsonStringOrObject, options);
+```
+
+#### Parameters
+
+- `json` (string | object): The JSON string or parsed object to sort.
+- `options` (object): Optional configuration object.
+- `options.indent` (string | number | false): Indentation style. Accepts a number of spaces (0-10), 'tab', 'tabs', or 'inherit' (default).
+- `options.overrides` (string[]): Array of key-paths to override sort order. Prefix with `!` to force to bottom.
+- `options.expansions` (string[]): Array of key-paths to control expansion. Prefix with `!` to collapse.
+
+#### Returns
+
+`string \| object` - The sorted JSON as a string if input was a string, or as an object if input was an object.
+
+#### Examples
+
+```js
+// Sort a JSON string
+const sorted = sort('{"b": 2, "a": 1}');
+// => '{"a": 1, "b": 2}'
+
+// Sort with custom indentation
+const sorted = sort(jsonObject, { indent: 4 });
+
+// Use overrides
+const sorted = sort(jsonObject, {
+  overrides: ['settings.layout', '!settings.color.palette']
+});
 ```
 
 ## License
