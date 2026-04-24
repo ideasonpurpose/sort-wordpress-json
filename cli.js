@@ -32,6 +32,14 @@ import ora from "ora";
 
 import prettyMilliseconds from "pretty-ms";
 
+/**
+ * Writes the formatted JSON content to the specified file path.
+ *
+ * @param {string} fullPath - The absolute path to the file.
+ * @param {string} formatted - The formatted JSON string.
+ * @param {boolean} dryRun - If true, logs the output instead of writing it.
+ * @returns {Promise<void>}
+ */
 export async function writeOutput(fullPath, formatted, dryRun) {
   if (dryRun) {
     if (process.stdout.isTTY) {
@@ -41,6 +49,36 @@ export async function writeOutput(fullPath, formatted, dryRun) {
   } else {
     await writeFile(fullPath, formatted);
   }
+}
+
+/**
+ * Returns the appropriate chalk color function based on duration.
+ * @param {number} ms - The duration in milliseconds.
+ * @returns {import('chalk').Chalk}
+ */
+function getColorForMs(ms) {
+  if (ms < 300) return chalk.green;
+  if (ms < 1000) return chalk.yellow;
+  return chalk.red;
+}
+
+/**
+ * Formats a millisecond value into a human-readable string with color coding.
+ *
+ * - Green for fast (< 300ms)
+ * - Yellow for moderate (< 1000ms)
+ * - Red for slow (≥ 1000ms)
+ *
+ * Non-numeric parts (units like "ms", "s", etc.) are dimmed.
+ *
+ * @param {number} milliseconds - The duration in milliseconds.
+ * @returns {string} The formatted and colored string.
+ */
+function prettyLogMs(milliseconds) {
+  const pretty = prettyMilliseconds(milliseconds);
+  const dimmed = pretty.replace(/([^\d.]+)/g, chalk.dim("$1"));
+  const colorFn = getColorForMs(milliseconds);
+  return colorFn(dimmed);
 }
 
 /**
@@ -71,7 +109,7 @@ export async function main(argv) {
       return;
     }
     console.log(
-      `${chalk.bold("sort-wp-json")} found ${chalk.cyan(filesToProcess.length)} files:`,
+      `${chalk.bold("sort-wp-json")} found ${chalk.yellow(filesToProcess.length)} files:`,
     );
   }
 
@@ -103,7 +141,7 @@ export async function main(argv) {
         spinner.stopAndPersist({
           symbol: chalk.gray("●"),
           text: chalk.gray(`Cached ${chalk.bold(schemaUrl)}`),
-          suffixText: chalk.blue(prettyMilliseconds(endTime)),
+          suffixText: prettyLogMs(endTime),
         });
       }
     } catch (e) {} // Ignore errors, will be handled in processFile
@@ -122,8 +160,8 @@ export async function main(argv) {
 
     if (result.status === "success") {
       writeOutput(result.fullPath, result.content, dryRun);
-      const ms = prettyMilliseconds(result.duration);
-      spinner.succeed(relPath + " " + chalk.blue(ms));
+      // const ms = prettyMilliseconds(result.duration);
+      spinner.succeed(relPath + " " + prettyLogMs(result.duration));
     } else if (result.status === "skipped") {
       spinner.warn(relPath + " " + chalk.yellow(`Skipped: ${result.reason}`));
     } else {
@@ -134,7 +172,7 @@ export async function main(argv) {
   const endTime = Number(process.hrtime.bigint() - startTime) / 1_000_000; // Convert nanoseconds to milliseconds
   const itemLabel = filesToProcess.length === 1 ? "file" : "files";
   console.log(
-    `${chalk.bold("sort-wp-json")} processed ${chalk.cyan(filesToProcess.length)} ${itemLabel} in ${chalk.cyan(prettyMilliseconds(endTime))}.`,
+    `${chalk.bold("sort-wp-json")} processed ${chalk.yellow(filesToProcess.length)} ${itemLabel} in ${prettyLogMs(endTime)}.`,
   );
 }
 
