@@ -8,17 +8,11 @@ import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import packageJson from "./package.json" with { type: "json" };
 
-import { formatDistanceToNow, addSeconds } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
 
 import { findThemeFiles } from "./lib/find-files.js";
 import { processFile } from "./lib/process-file.js";
-import {
-  cacheGet,
-  cacheSet,
-  cacheKeyExists,
-  cacheList,
-  cacheClear,
-} from "./lib/cache.js";
+import { cacheKeyExists, cacheList, cacheClear } from "./lib/cache.js";
 import { cacheSchemas } from "./lib/cache-schemas.js";
 import { coerceIndent } from "./lib/coerce-indent.js";
 
@@ -26,6 +20,7 @@ import { schemaUrls } from "./defaults/schemas.js";
 import { overrides as defaultOverrides } from "./defaults/overrides.js";
 import { expansions as defaultExpansions } from "./defaults/expansions.js";
 
+import { resolve } from "path";
 
 import { readFile, writeFile } from "fs/promises";
 import { realpathSync } from "fs";
@@ -36,7 +31,6 @@ import chalk from "chalk";
 import ora from "ora";
 
 import prettyMilliseconds from "pretty-ms";
-// import { argv } from "process";
 
 export async function writeOutput(fullPath, formatted, dryRun) {
   if (dryRun) {
@@ -56,9 +50,9 @@ export async function main(argv) {
   const startTime = process.hrtime.bigint();
   const {
     file: argFile,
-    indent: argIndent,
-    overrides: argOverrides,
-    expansions: argExpansions,
+    indent,
+    overrides: argOverrides = [],
+    expansions: argExpansions = [],
     noDefaultOverrides,
     dryRun,
   } = argv;
@@ -76,11 +70,17 @@ export async function main(argv) {
       console.error("No theme.json file found.");
       return;
     }
-    console.log(`Found ${filesToProcess.length} files to process:`);
+    console.log(
+      `${chalk.bold("sort-wp-json")} found ${chalk.cyan(filesToProcess.length)} files:`,
+    );
   }
 
   const missingCacheKeys = new Set();
-  const updatedFiles = [];
+
+  const overrides = noDefaultOverrides
+    ? argOverrides
+    : [...defaultOverrides, ...argOverrides];
+  const expansions = [...defaultExpansions, ...argExpansions];
 
   for (const file of filesToProcess) {
     const filepath = resolve(file);
@@ -106,79 +106,36 @@ export async function main(argv) {
           suffixText: chalk.blue(prettyMilliseconds(endTime)),
         });
       }
-    } catch (e) {
-      // Ignore errors, will be handled in processFile
-    }
+    } catch (e) {} // Ignore errors, will be handled in processFile
 
-    const relPath = filepath.replace(process.cwd(), "").replace(/^\/*/, "");
+    const relPath = filepath.replace(process.cwd(), "").replace(/^\/*/, ""); // ironically, this is usually just pre-resolved `file`
     const spinner = ora({
       text: relPath,
       spinner: "dots3",
     }).start();
 
-    const result = await processFile(filepath, argIndent);
+    const result = await processFile(filepath, {
+      indent,
+      overrides,
+      expansions,
+    });
+
     if (result.status === "success") {
-      spinner.succeed(
-        relPath + " " + chalk.blue(prettyMilliseconds(result.duration)),
-      );
+      writeOutput(result.fullPath, result.content, dryRun);
+      const ms = prettyMilliseconds(result.duration);
+      spinner.succeed(relPath + " " + chalk.blue(ms));
     } else if (result.status === "skipped") {
       spinner.warn(relPath + " " + chalk.yellow(`Skipped: ${result.reason}`));
     } else {
       spinner.fail(relPath + " " + chalk.red(`Error: ${result.reason}`));
     }
-    // updatedFiles.push(processFile(filepath, argIndent));
   }
 
-  // (await Promise.all(updatedFiles)).forEach((result) => {
-  //   const relPath = result.file.replace(process.cwd(), "").replace(/^\/*/, "");
-  //   if (result.status === "success") {
-  //     writeOutput(result.fullPath, result.content, dryRun); // adds about 1ms to the total time
-  //     console.log(
-  //       chalk.green("✔"),
-  //       relPath,
-  //       chalk.blue(prettyMilliseconds(result.duration)),
-  //     );
-  //   } else if (result.status === "skipped") {
-  //     console.warn(
-  //       chalk.yellow("⚠"),
-  //       // chalk.yellow("↷"),
-  //       relPath,
-  //       chalk.yellow(`Skipped: ${result.reason}`),
-  //     );
-  //   } else {
-  //     console.error(
-  //       chalk.red("✖"),
-  //       relPath,
-  //       chalk.red(`Error: ${result.reason}`),
-  //     );
-  //     console.error(chalk.red(result?.error?.stack));
-  //   }
-  // });
   const endTime = Number(process.hrtime.bigint() - startTime) / 1_000_000; // Convert nanoseconds to milliseconds
   const itemLabel = filesToProcess.length === 1 ? "file" : "files";
   console.log(
-    `sort-wp-json processed ${chalk.cyan(filesToProcess.length)} ${itemLabel} in ${chalk.cyan(prettyMilliseconds(endTime))}.`,
+    `${chalk.bold("sort-wp-json")} processed ${chalk.cyan(filesToProcess.length)} ${itemLabel} in ${chalk.cyan(prettyMilliseconds(endTime))}.`,
   );
-}
-
-/**
- * Coerces an indentation value into a standardized object format.
- * The ten character limit comes from JSON.stringify's maximum supported indentation.
- * @param {string|number} n - The indentation value to coerce. Accepts 'tabs', 'tab', or a number (0-10).
- * @returns {Object|false} An object with properties {amount: number, indent: string, type: string} for valid inputs, or false for invalid values.
- */
-export function coerceIndent(n) {
-  const strN = String(n);
-  if (["tabs", "tab"].includes(strN)) {
-    return { amount: 1, indent: "\t", type: "tab" };
-  }
-  // Numbers will be clamped from 0-10, or NaN
-  let i = Math.min(Math.max(parseInt(strN, 10), 0), 10);
-  if (!isNaN(i)) {
-    return { amount: i, indent: "".padEnd(i, " "), type: "space" };
-  }
-  // 'inherit' and all non-numeric values return false
-  return false;
 }
 
 /* v8 ignore start */
@@ -189,6 +146,9 @@ if (fileURLToPath(import.meta.url) === realpathSync(process.argv[1])) {
       "Sort WordPress JSON files",
       (yargs) => {
         yargs
+          .parserConfiguration({
+            "combine-arrays": true,
+          })
           .pkgConf("sort-wp-json")
           .positional("file", {
             type: "string",
@@ -226,22 +186,12 @@ if (fileURLToPath(import.meta.url) === realpathSync(process.argv[1])) {
               "A list of expansion keys like 'settings.typography.fontSizes'. Collapse nodes by prefixing with an exclamation point like '!settings.color.palette'",
             default: [],
           })
-          // .option("cache-clear", {
-          //   type: "boolean",
-          //   describe: "Clear the schema cache",
-          //   default: false,
-          // })
-          // .option("cache-reset", {
-          //   type: "boolean",
-          //   describe:
-          //     "Reset the schema cache (Clear and download fresh copies)",
-          //   default: false,
-          // })
-          // .option("cache-list", {
-          //   type: "boolean",
-          //   describe: "List the cached schema files",
-          //   default: false,
-          // })
+          .option("option-check", {
+            alias: "c",
+            type: "boolean",
+            describe: "Log current options and exit. For Debugging.",
+            default: false,
+          })
           .option("dry-run", {
             alias: "n",
             type: "boolean",
@@ -250,6 +200,11 @@ if (fileURLToPath(import.meta.url) === realpathSync(process.argv[1])) {
           });
       },
       async (argv) => {
+        if (argv.optionCheck) {
+          console.log("Current Options:");
+          console.log(argv);
+          return;
+        }
         return await main(/** @type {import('./types.d.ts').CliArgs} */ (argv));
       },
     )
@@ -284,9 +239,9 @@ if (fileURLToPath(import.meta.url) === realpathSync(process.argv[1])) {
                 }).start();
 
                 await cacheSchemas(schema);
+
                 const endTime =
                   Number(process.hrtime.bigint() - startTime) / 1_000_000; // Convert nanoseconds to milliseconds
-
                 spinner.stopAndPersist({
                   symbol: chalk.gray("●"),
                   text: chalk.gray(`Cached ${chalk.bold(schema)}`),
@@ -296,9 +251,7 @@ if (fileURLToPath(import.meta.url) === realpathSync(process.argv[1])) {
               const endTotalTime =
                 Number(process.hrtime.bigint() - startTotalTime) / 1_000_000; // Convert nanoseconds to milliseconds
               console.log(
-                "Schema cache refreshed in " +
-                  chalk.blue(prettyMilliseconds(endTotalTime)) +
-                  ".",
+                `Schema cache refreshed in ${chalk.blue(prettyMilliseconds(endTotalTime))}.`,
               );
             },
           )

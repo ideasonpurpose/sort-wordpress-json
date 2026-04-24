@@ -17,7 +17,6 @@ describe("processFile", async () => {
   const { formatWPJson } = await import("../lib/format-wp-json.js");
   const { validateJson } = await import("../lib/validate-json.js");
 
-  const inputJson = { test: "data" };
   const fakePath = "./not/a/file.json";
 
   beforeEach(() => {
@@ -25,13 +24,14 @@ describe("processFile", async () => {
   });
 
   test("indent provided, detectIndent not called", async () => {
+    const inputJson = { $schema: "url" };
     readFile.mockResolvedValue(JSON.stringify(inputJson));
     getSchema.mockResolvedValue({ schema: true });
     schemaSort.mockResolvedValue(inputJson);
     formatWPJson.mockResolvedValue("formatted");
     validateJson.mockResolvedValue(true);
 
-    const actual = await processFile(fakePath, {});
+    const actual = await processFile(fakePath, { indent: {} });
 
     expect(actual).toHaveProperty("status", "success");
     expect(actual).toHaveProperty("duration");
@@ -39,8 +39,8 @@ describe("processFile", async () => {
   });
 
   test("skipped when no schema", async () => {
+    const inputJson = { test: "data" };
     readFile.mockResolvedValue(JSON.stringify(inputJson));
-    getSchema.mockResolvedValue(false);
 
     const actual = await processFile(fakePath);
 
@@ -48,11 +48,13 @@ describe("processFile", async () => {
   });
 
   test("skip when getSchema errors", async () => {
-    getSchema.mockRejectedValue(new Error("getSchema Error"));
+    const inputJson = { $schema: "url" };
+    readFile.mockResolvedValue(JSON.stringify(inputJson));
+    getSchema.mockResolvedValue(false);
 
-    const actual = await processFile(fakePath);
+    const actual = await processFile(fakePath, { indent: {} });
     expect(actual).toHaveProperty("status", "skipped");
-    expect(actual).toHaveProperty("reason", "getSchema Error");
+    expect(actual).toHaveProperty("reason", "unable to load schema");
   });
 
   test("error on readFile", async () => {

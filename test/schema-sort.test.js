@@ -1,7 +1,9 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { expect, test, describe, vi } from "vitest";
 
-vi.mock('../lib/get-schema.js');
+import $RefParser from "@apidevtools/json-schema-ref-parser";
+
+vi.mock("../lib/get-schema.js");
 import { getSchema } from "../lib/get-schema.js";
 import { schemaSort, walkSchema } from "../lib/schema-sort.js";
 
@@ -10,7 +12,7 @@ describe("schemaSort", async () => {
   const consoleErrSpy = vi.spyOn(console, "error").mockImplementation(() => {});
   const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-  const schema = { type: 'object' };
+  const schema = await $RefParser.bundle("./schema/theme.json");
   getSchema.mockResolvedValue(schema);
 
   test("Requires a schema", async () => {
@@ -192,7 +194,7 @@ describe("schemaSort", async () => {
 
     await writeFile(`./tmp/units-array.json`, JSON.stringify(actual, null, 2));
     expect(actual).toEqual(expected);
-    expect(JSON.stringify(actual, null, 2)).toBe(
+    expect(JSON.stringify(actual, null, 2)).toEqual(
       JSON.stringify(expected, null, 2),
     );
   });
@@ -255,4 +257,31 @@ describe("schemaSort", async () => {
   //       JSON.stringify(expected, null, 2)
   //     );
   //   });
+
+  test("Test overrides", async () => {
+    const schema = {
+      properties: {
+        parent: {
+          properties: {
+            a: { type: "string" },
+            b: { type: "string" },
+            c: { type: "string" },
+          },
+        },
+      },
+    };
+    const src = {
+      parent: { c: "3", b: "2", a: "1" },
+    };
+
+    const overrides = ["parent.b", "!parent.a"];
+    const result = walkSchema(schema, src, {}, [], overrides);
+
+    const keys = Object.keys(result.parent);
+    // Expected order for parent:
+    // 1. pre-overrides: ["b"]
+    // 2. remaining schema keys: ["c"] (a was moved)
+    // 3. post-overrides: ["a"]
+    expect(keys).toEqual(["b", "c", "a"]);
+  });
 });

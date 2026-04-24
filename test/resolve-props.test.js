@@ -3,18 +3,18 @@ import { readFile } from "node:fs/promises";
 
 import $RefParser from "@apidevtools/json-schema-ref-parser";
 
-vi.mock('../lib/get-schema.js');
+vi.mock("../lib/get-schema.js");
 import { getSchema } from "../lib/get-schema.js";
 import { resolveProps, flattenProps } from "../lib/resolve-props.js";
 
 describe("resolveProps", async () => {
-  const consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+  // const consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
   const consoleErrSpy = vi.spyOn(console, "error").mockImplementation(() => {});
   const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-  const schema = { type: 'object' };
-  getSchema.mockResolvedValue(schema);
+  const schema = await $RefParser.bundle("./schema/theme.json");
   await $RefParser.dereference(schema);
+  getSchema.mockResolvedValue(schema);
 
   test("flattenProps allOf", async () => {
     const fakeSchema = JSON.parse(
@@ -124,6 +124,7 @@ describe("resolveProps", async () => {
 
     expect(actual).toHaveProperty("styles");
     expect(actual).toHaveProperty("styles.properties.background");
+    expect(actual).toHaveProperty("styles.properties.typography");
     expect(actual).toHaveProperty("styles.properties.blocks"); // second object in allOf
     expect(actual).toHaveProperty("styles.description"); // check plain properties
   });

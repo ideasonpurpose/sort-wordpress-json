@@ -279,8 +279,9 @@ Let's only sort JSON files with an explicit `$schema` key pointing to a valid sc
 
 - [x] Indentation should be inherited from the source file and used as the basis for reformatting with Prettier. Indentation can also be overridden with a command-line flag.
 
-- [ ] Cache remote schema files?
+- [x] Cache remote schema files?
 
 - [ ] Bundled schema files should be listed in a JSON file which is used for local fallbacks and for refreshing locally bundled schemas. Key the file by the URL.
 
 - [x] Should be able to run on a directory, and sort all JSON files which contain a $schema. Or, look for WordPress-specific JSON files only?
+- [ ] Load options from local package.json (see )
