@@ -328,3 +328,16 @@ Let's only sort JSON files with an explicit `$schema` key pointing to a valid sc
 
 - [x] Should be able to run on a directory, and sort all JSON files which contain a $schema. Or, look for WordPress-specific JSON files only?
 - [ ] Load options from local package.json (see )
+
+
+
+<!-- START IOP CREDIT BLURB -->
+
+## &nbsp;
+
+#### Brought to you by IOP
+
+| <a href="https://www.ideasonpurpose.com"><img src="https://raw.githubusercontent.com/ideasonpurpose/ideasonpurpose/master/iop-logo-white-on-black-88px.png" height="44" align="top" alt="IOP Logo"></a>    | This project is actively developed and used in production at <a href="https://www.ideasonpurpose.com">Ideas On Purpose</a>. | 
+|-------|------|
+
+<!-- END IOP CREDIT BLURB -->
