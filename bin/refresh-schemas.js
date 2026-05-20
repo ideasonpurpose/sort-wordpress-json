@@ -1,4 +1,4 @@
-import { cacheSchemas } from "../lib/cache.js";
-import { schemaUrls } from "../lib/schemas.js";
+import { cacheSchemas } from "../lib/cache-schemas.js";
+import { schemaUrls } from "../defaults/schemas.js";
 
 await cacheSchemas(schemaUrls);
