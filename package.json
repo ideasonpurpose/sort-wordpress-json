@@ -20,7 +20,6 @@
     "sort-wp-json": "./cli.js"
   },
   "scripts": {
-    "prepare": "npm run schema:refresh",
     "schema:refresh": "node bin/refresh-schemas.js",
     "test": "vitest",
     "version": "version-everything && git add -u"

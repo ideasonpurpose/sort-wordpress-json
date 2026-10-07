@@ -128,7 +128,9 @@ Using the same path notation as Overrides, nodes can be marked to expand or coll
 
 The [published WordPress schemas](https://github.com/WordPress/gutenberg/tree/trunk/schemas) are the source of truth, their published property order is used as the baseline for re-ordering a file's properties.
 
-Files should include a $schema property. **sort-wp-json** will cache known schemas from the WordPress/Gutenberg source repo whenever the package is installed or updated. The following schema will be pre-cached:
+Files should include a $schema property. **sort-wp-json** will caches included schemas on first use.
+
+To update or warm the schema cache, run `sort-wp-json cache refresh` to pull the following schemas from the WordPress/Gutenberg source repo:
 
 - https://schemas.wp.org/trunk/theme.json
 - https://schemas.wp.org/trunk/block.json
@@ -146,6 +148,15 @@ sort-wp-json [file]
 ```
 
 Sorts WordPress JSON files in the current directory or specified file/glob pattern.
+
+When no file is given and STDIN is piped (not a terminal), JSON is read from STDIN, sorted, and written to STDOUT. Status messages go to STDERR so output can be piped cleanly:
+
+```bash
+sort-wp-json < theme.json > sorted-theme.json
+cat theme.json | sort-wp-json --indent 2 | pbcopy
+```
+
+STDIN input must include a `$schema` property since there is no filename to infer it from.
 
 #### Options
 
@@ -175,13 +186,8 @@ Settings can be customized per-project by adding a `sort-wp-json` property to th
   "description": "Example showing sort-wp-json overrides in package.json",
   "sort-wp-json": {
     "indent": 4,
-    "overrides": [
-      "settings.layout",
-      "settings.color.custom"
-    ],
-    "expansions": [
-      "settings.typography.fontSizes"
-    ]
+    "overrides": ["settings.layout", "settings.color.custom"],
+    "expansions": ["settings.typography.fontSizes"]
   }
 }
 ```
@@ -232,7 +238,7 @@ const sorted = sort(jsonObject, { indent: 4 });
 
 // Use overrides
 const sorted = sort(jsonObject, {
-  overrides: ['settings.layout', '!settings.color.palette']
+  overrides: ["settings.layout", "!settings.color.palette"],
 });
 ```
 
@@ -329,15 +335,13 @@ Let's only sort JSON files with an explicit `$schema` key pointing to a valid sc
 - [x] Should be able to run on a directory, and sort all JSON files which contain a $schema. Or, look for WordPress-specific JSON files only?
 - [ ] Load options from local package.json (see )
 
-
-
 <!-- START IOP CREDIT BLURB -->
 
 ## &nbsp;
 
 #### Brought to you by IOP
 
-| <a href="https://www.ideasonpurpose.com"><img src="https://raw.githubusercontent.com/ideasonpurpose/ideasonpurpose/master/iop-logo-white-on-black-88px.png" height="44" align="top" alt="IOP Logo"></a>    | This project is actively developed and used in production at <a href="https://www.ideasonpurpose.com">Ideas On Purpose</a>. | 
-|-------|------|
+| <a href="https://www.ideasonpurpose.com"><img src="https://raw.githubusercontent.com/ideasonpurpose/ideasonpurpose/master/iop-logo-white-on-black-88px.png" height="44" align="top" alt="IOP Logo"></a> | This project is actively developed and used in production at <a href="https://www.ideasonpurpose.com">Ideas On Purpose</a>. |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 
 <!-- END IOP CREDIT BLURB -->
