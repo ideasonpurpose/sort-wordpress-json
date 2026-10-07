@@ -1,0 +1,24 @@
+{
+  "name": "sort-wordpress-json",
+  "displayName": "Sort WordPress JSON",
+  "description": "Sort the active editor with sort-wp-json.",
+  "version": "0.0.5",
+  "private": true,
+  "publisher": "ideasonpurpose",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "vscode": "^1.100.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["onCommand:sort-wordpress-json.sort"],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "sort-wordpress-json.sort",
+        "title": "Sort WordPress JSON"
+      }
+    ]
+  }
+}

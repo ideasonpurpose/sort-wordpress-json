@@ -203,7 +203,12 @@ export async function main(argv) {
 
 /* v8 ignore start */
 if (fileURLToPath(import.meta.url) === realpathSync(process.argv[1])) {
-	yargs(hideBin(process.argv))
+	// VS Code runs this with its Electron binary and ELECTRON_RUN_AS_NODE=1.
+	// yargs hideBin then keeps the script path as the [file] positional.
+	const userArgv = process.env.ELECTRON_RUN_AS_NODE
+		? process.argv.slice(2)
+		: hideBin(process.argv);
+	yargs(userArgv)
 		.command(
 			"$0 [file]",
 			"Sort WordPress JSON files. With no file argument and piped STDIN, reads JSON from STDIN and writes sorted JSON to STDOUT.",

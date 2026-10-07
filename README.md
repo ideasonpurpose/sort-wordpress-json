@@ -176,6 +176,14 @@ Manage schema cache: `clear`, `refresh`, or `list`.
 
 For full details and all options, run `sort-wp-json --help`.
 
+### VS Code extension
+
+`extension/` is a local VS Code extension. It registers **Sort WordPress JSON**, which runs `sort-wp-json` on the active editor window.
+
+To install, clone this repo and install dependencies with `npm` or `pnpm`. In VS Code, run **Developer: Install Extension from Location...** and choose the `extension/` folder.
+
+The command uses stdin, so the editor should include a `$schema` property. If the file has been saved, nearby `package.json` files will be checked for additional settings.
+
 ### Configuration
 
 Settings can be customized per-project by adding a `sort-wp-json` property to the project's `package.json` file. Options provided via CLI will override these settings.
